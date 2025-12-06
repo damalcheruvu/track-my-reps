@@ -11,9 +11,9 @@ const DEFAULT_WEEKLY_PLAN = {
       {
         name: 'Chest',
         exercises: [
-          { name: 'Bench Press', sets: 3, reps: '8-12' },
-          { name: 'Incline Dumbbell Press', sets: 3, reps: '10-12' },
-          { name: 'Cable Flyes', sets: 3, reps: '12-15' },
+          { name: 'Bench Press', sets: 3, reps: 8, weight: null },
+          { name: 'Incline Dumbbell Press', sets: 3, reps: 10, weight: null },
+          { name: 'Cable Flyes', sets: 3, reps: 12, weight: null },
         ]
       }
     ]
@@ -24,9 +24,9 @@ const DEFAULT_WEEKLY_PLAN = {
       {
         name: 'Back',
         exercises: [
-          { name: 'Pull-ups', sets: 3, reps: '8-10' },
-          { name: 'Barbell Rows', sets: 3, reps: '8-12' },
-          { name: 'Lat Pulldown', sets: 3, reps: '10-12' },
+          { name: 'Pull-ups', sets: 3, reps: 8, weight: null },
+          { name: 'Barbell Rows', sets: 3, reps: 10, weight: null },
+          { name: 'Lat Pulldown', sets: 3, reps: 12, weight: null },
         ]
       }
     ]
@@ -38,9 +38,9 @@ const DEFAULT_WEEKLY_PLAN = {
       {
         name: 'Legs',
         exercises: [
-          { name: 'Squats', sets: 4, reps: '8-12' },
-          { name: 'Leg Press', sets: 3, reps: '10-12' },
-          { name: 'Leg Curls', sets: 3, reps: '12-15' },
+          { name: 'Squats', sets: 4, reps: 10, weight: null },
+          { name: 'Leg Press', sets: 3, reps: 12, weight: null },
+          { name: 'Leg Curls', sets: 3, reps: 12, weight: null },
         ]
       }
     ]
@@ -51,10 +51,10 @@ const DEFAULT_WEEKLY_PLAN = {
       {
         name: 'Shoulders & Arms',
         exercises: [
-          { name: 'Overhead Press', sets: 3, reps: '8-12' },
-          { name: 'Lateral Raises', sets: 3, reps: '12-15' },
-          { name: 'Barbell Curls', sets: 3, reps: '10-12' },
-          { name: 'Tricep Dips', sets: 3, reps: '8-12' },
+          { name: 'Overhead Press', sets: 3, reps: 10, weight: null },
+          { name: 'Lateral Raises', sets: 3, reps: 12, weight: null },
+          { name: 'Barbell Curls', sets: 3, reps: 10, weight: null },
+          { name: 'Tricep Dips', sets: 3, reps: 10, weight: null },
         ]
       }
     ]
@@ -536,6 +536,31 @@ function App() {
           </div>
         </>
       )}
+
+      {/* Bottom Navigation for Mobile */}
+      <nav className="bottom-nav">
+        <button 
+          className={`nav-item ${view === 'tracker' ? 'active' : ''}`}
+          onClick={() => setView('tracker')}
+        >
+          <div className="nav-icon">💪</div>
+          <span>Workout</span>
+        </button>
+        <button 
+          className={`nav-item ${view === 'planner' ? 'active' : ''}`}
+          onClick={() => setView('planner')}
+        >
+          <div className="nav-icon">📅</div>
+          <span>Plan</span>
+        </button>
+        <button 
+          className="nav-item"
+          onClick={user ? signOut : signInWithGoogle}
+        >
+          <div className="nav-icon">{user ? '👤' : '🔐'}</div>
+          <span>{user ? 'Profile' : 'Sign In'}</span>
+        </button>
+      </nav>
     </div>
   );
 }
