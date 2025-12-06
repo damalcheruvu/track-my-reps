@@ -1,0 +1,748 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+  padding-bottom: 80px;
+}
+
+.header {
+  text-align: center;
+  color: white;
+  padding: 1.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  margin-bottom: 1rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.date {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.progress-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  transition: width 0.3s ease;
+  border-radius: 12px;
+}
+
+.progress-text {
+  text-align: center;
+  color: #374151;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.workout-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.category-section {
+  margin-bottom: 2rem;
+}
+
+.category-title {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  padding-left: 0.5rem;
+}
+
+.exercise-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.exercise-card:active {
+  transform: scale(0.98);
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.exercise-name {
+  font-size: 1.15rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.exercise-reps {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.sets-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.set-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease;
+  min-width: 90px;
+}
+
+.set-checkbox:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.set-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  accent-color: #10b981;
+}
+
+.set-checkbox input[type="checkbox"]:checked + .checkbox-label {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.checkbox-label {
+  font-size: 0.9rem;
+  color: #4b5563;
+  transition: color 0.2s ease;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 1rem;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.reset-button, .edit-plan-btn, .nav-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.edit-plan-btn {
+  background: #3b82f6;
+}
+
+.edit-plan-btn:hover {
+  background: #2563eb;
+}
+
+.nav-button {
+  background: #8b5cf6;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+}
+
+.nav-button:hover {
+  background: #7c3aed;
+}
+
+.reset-button:hover {
+  background: #dc2626;
+}
+
+.reset-button:active, .edit-plan-btn:active, .nav-button:active {
+  transform: scale(0.96);
+}
+
+/* Day Selector */
+.day-selector {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.day-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.day-btn.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
+.day-btn.rest {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Rest Day View */
+.rest-day-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.rest-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+}
+
+.rest-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.rest-card h2 {
+  font-size: 2rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.rest-card p {
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Planner View */
+.planner-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.day-planner {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.day-header h2 {
+  color: #1f2937;
+  font-size: 1.5rem;
+}
+
+.day-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rest-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.rest-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #f59e0b;
+}
+
+.rest-day-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.5rem;
+  color: #6b7280;
+}
+
+.planner-category {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.category-header-edit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.category-header-edit h3 {
+  color: #1f2937;
+  font-size: 1.2rem;
+}
+
+.remove-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #dc2626;
+}
+
+.exercise-edit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.exercise-name-small {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.exercise-details {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.remove-btn-small {
+  background: #ef4444;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+
+.remove-btn-small:hover {
+  background: #dc2626;
+}
+
+.add-exercise-btn, .add-category-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.add-category-btn {
+  background: #3b82f6;
+}
+
+.add-exercise-btn:hover {
+  background: #059669;
+}
+
+.add-category-btn:hover {
+  background: #2563eb;
+}
+
+.copy-select {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.copy-select:hover {
+  border-color: #d1d5db;
+}
+
+.copy-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Loading & Auth Screens */
+.loading-screen, .sign-in-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-screen p {
+  color: white;
+  font-size: 1.2rem;
+  margin-top: 1rem;
+}
+
+.sign-in-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.sign-in-card h1 {
+  color: #1f2937;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sign-in-subtitle {
+  color: #6b7280;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.features-list {
+  text-align: left;
+  margin: 2rem 0;
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.feature-item:last-child {
+  margin-bottom: 0;
+}
+
+.feature-icon {
+  font-size: 1.25rem;
+}
+
+.google-sign-in-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: white;
+  color: #1f2937;
+  border: 2px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+}
+
+.google-sign-in-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.privacy-note {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.continue-local-btn {
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.continue-local-btn:hover {
+  color: #374151;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.sign-out-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sign-out-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .app {
+    padding: 0.75rem;
+    padding-bottom: 80px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-top {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .user-info {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+  }
+
+  .exercise-card {
+    padding: 1rem;
+  }
+
+  .exercise-name {
+    font-size: 1rem;
+  }
+
+  .sets-container {
+    gap: 0.5rem;
+  }
+
+  .set-checkbox {
+    padding: 0.4rem 0.75rem;
+    min-width: 80px;
+  }
+
+  .day-selector {
+    gap: 0.4rem;
+  }
+
+  .day-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .footer {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .reset-button, .edit-plan-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .planner-container {
+    padding-bottom: 1rem;
+  }
+
+  .day-planner {
+    padding: 1rem;
+  }
+
+  .day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .rest-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .rest-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .sign-in-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .sign-in-card h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .set-checkbox {
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  .reset-button {
+    min-height: 48px;
+  }
+}
