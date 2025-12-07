@@ -52,16 +52,24 @@ export const useFirestoreSync = (user, localData, dataKey) => {
   const isSaving = useRef(false);
   const saveTimeoutRef = useRef(null);
   const lastLocalUpdateRef = useRef(Date.now());
+  const lastUserRef = useRef(null);
 
   // Load data from Firestore when user signs in
   useEffect(() => {
     if (!user) {
-      // Only set local data once on mount or when user changes
-      if (!hasInitialized.current) {
+      // Reset when user signs out
+      if (lastUserRef.current !== null) {
         setSyncedData(localData);
-        hasInitialized.current = true;
+        hasInitialized.current = false;
+        lastUserRef.current = null;
       }
       return;
+    }
+
+    // Reset if different user
+    if (lastUserRef.current !== user.uid) {
+      hasInitialized.current = false;
+      lastUserRef.current = user.uid;
     }
 
     const userDocRef = doc(db, 'users', user.uid);
@@ -88,7 +96,7 @@ export const useFirestoreSync = (user, localData, dataKey) => {
     });
 
     return unsubscribe;
-  }, [user, dataKey]);
+  }, [user, dataKey, localData]);
 
   // Save data to Firestore when it changes
   useEffect(() => {
@@ -135,10 +143,24 @@ export const useNotesSync = (user, dataKey) => {
   const [notes, setNotes] = useState({});
   const hasLoaded = useRef(false);
   const saveTimeoutRef = useRef(null);
+  const lastUserRef = useRef(null);
 
-  // Load notes once on mount
+  // Load notes once on mount or when user changes
   useEffect(() => {
-    if (!user || hasLoaded.current) return;
+    if (!user) {
+      hasLoaded.current = false;
+      lastUserRef.current = null;
+      return;
+    }
+
+    // Reset if different user
+    if (lastUserRef.current !== user.uid) {
+      hasLoaded.current = false;
+      lastUserRef.current = user.uid;
+      setNotes({});
+    }
+
+    if (hasLoaded.current) return;
 
     const loadNotes = async () => {
       try {

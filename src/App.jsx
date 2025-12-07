@@ -49,6 +49,7 @@ function App() {
   const hasMigrated = useRef(false);
   const initializedDays = useRef(new Set());
   const completedSetsRef = useRef({});
+  const lastUserRef = useRef(null);
   
   // Sync weekly plan with Firebase (requires login)
   const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
@@ -77,9 +78,25 @@ function App() {
     completedSetsRef.current = completedSets;
   }, [completedSets]);
 
+  // Reset migration state when user changes
+  useEffect(() => {
+    if (!user) {
+      lastUserRef.current = null;
+      hasMigrated.current = false;
+      initializedDays.current.clear();
+      return;
+    }
+
+    if (lastUserRef.current !== user.uid) {
+      lastUserRef.current = user.uid;
+      hasMigrated.current = false;
+      initializedDays.current.clear();
+    }
+  }, [user]);
+
   // Migrate old category-based data to new flat structure
   useEffect(() => {
-    if (!weeklyPlan || hasMigrated.current) return;
+    if (!weeklyPlan || hasMigrated.current || !user) return;
     
     let needsMigration = false;
     const migratedPlan = {};
