@@ -145,6 +145,27 @@ export const useNotesSync = (user, dataKey) => {
   const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
+  // Function to load notes from Firebase
+  const loadNotesFromFirebase = async () => {
+    if (!user) return;
+    
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        const cloudNotes = docSnap.data()[dataKey];
+        if (cloudNotes) {
+          console.log('Loaded notes from Firebase:', cloudNotes);
+          setNotes(cloudNotes);
+        }
+      }
+      hasLoaded.current = true;
+    } catch (error) {
+      console.error('Error loading notes:', error);
+      hasLoaded.current = true;
+    }
+  };
+
   // Load notes once on mount or when user changes
   useEffect(() => {
     if (!user) {
@@ -162,25 +183,22 @@ export const useNotesSync = (user, dataKey) => {
 
     if (hasLoaded.current) return;
 
-    const loadNotes = async () => {
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-          const cloudNotes = docSnap.data()[dataKey];
-          if (cloudNotes) {
-            console.log('Loaded notes from Firebase:', cloudNotes);
-            setNotes(cloudNotes);
-          }
-        }
-        hasLoaded.current = true;
-      } catch (error) {
-        console.error('Error loading notes:', error);
-        hasLoaded.current = true;
+    loadNotesFromFirebase();
+  }, [user, dataKey]);
+
+  // Reload when page becomes visible (tab switching)
+  useEffect(() => {
+    if (!user) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && hasLoaded.current) {
+        console.log('Page visible - reloading notes from Firebase');
+        loadNotesFromFirebase();
       }
     };
 
-    loadNotes();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user, dataKey]);
 
   // Save notes when they change (debounced)
@@ -219,6 +237,27 @@ export const useCompletedSetsSync = (user, dataKey) => {
   const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
+  // Function to load sets from Firebase
+  const loadSetsFromFirebase = async () => {
+    if (!user) return;
+    
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        const cloudSets = docSnap.data()[dataKey];
+        if (cloudSets) {
+          console.log('Loaded sets from Firebase:', cloudSets);
+          setSets(cloudSets);
+        }
+      }
+      hasLoaded.current = true;
+    } catch (error) {
+      console.error('Error loading sets:', error);
+      hasLoaded.current = true;
+    }
+  };
+
   // Load once on mount or when user changes
   useEffect(() => {
     if (!user) {
@@ -236,25 +275,22 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     if (hasLoaded.current) return;
 
-    const loadSets = async () => {
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        if (docSnap.exists()) {
-          const cloudSets = docSnap.data()[dataKey];
-          if (cloudSets) {
-            console.log('Loaded sets from Firebase:', cloudSets);
-            setSets(cloudSets);
-          }
-        }
-        hasLoaded.current = true;
-      } catch (error) {
-        console.error('Error loading sets:', error);
-        hasLoaded.current = true;
+    loadSetsFromFirebase();
+  }, [user, dataKey]);
+
+  // Reload when page becomes visible (tab switching)
+  useEffect(() => {
+    if (!user) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && hasLoaded.current) {
+        console.log('Page visible - reloading sets from Firebase');
+        loadSetsFromFirebase();
       }
     };
 
-    loadSets();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user, dataKey]);
 
   // Save when they change (debounced)

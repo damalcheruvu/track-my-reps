@@ -342,31 +342,25 @@
 .day-selector {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin: 1rem 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 0.5rem 0.25rem;
-}
-
-.day-selector::-webkit-scrollbar {
-  display: none;
+  padding: 0.5rem 0.5rem;
 }
 
 .day-btn {
   background: rgba(255, 255, 255, 0.15);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 0.65rem 1rem;
+  padding: 0.6rem 0.9rem;
   border-radius: 12px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 50px;
+  flex: 0 1 auto;
+  min-width: 48px;
   backdrop-filter: blur(10px);
   text-align: center;
 }
@@ -795,18 +789,6 @@
   .set-checkbox {
     padding: 0.4rem 0.75rem;
     min-width: 80px;
-  }
-
-  .day-selector {
-    gap: 0.35rem;
-    padding: 0.5rem 0;
-    justify-content: flex-start;
-  }
-
-  .day-btn {
-    padding: 0.5rem 0.85rem;
-    font-size: 0.85rem;
-    min-width: 48px;
   }
 
   .footer {
