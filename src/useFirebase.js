@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { 
   signInWithPopup, 
   signOut as firebaseSignOut,
@@ -138,41 +138,19 @@ export const useFirestoreSync = (user, localData, dataKey) => {
   return [syncedData, setSyncedData, syncing];
 };
 
-// Simplified sync for notes only - no complex race condition handling needed
+// Simplified sync for notes - Firebase offline persistence handles caching
 export const useNotesSync = (user, dataKey) => {
   const [notes, setNotes] = useState({});
   const hasLoaded = useRef(false);
   const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
-  // Function to load notes from Firebase
-  const loadNotesFromFirebase = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        const cloudNotes = docSnap.data()[dataKey];
-        if (cloudNotes) {
-          console.log('Loaded notes from Firebase:', cloudNotes);
-          setNotes(cloudNotes);
-        } else {
-          console.log('No notes found in Firebase');
-        }
-      }
-      hasLoaded.current = true;
-    } catch (error) {
-      console.error('Error loading notes:', error);
-      hasLoaded.current = true;
-    }
-  }, [user, dataKey]);
-
   // Load notes once on mount or when user changes
   useEffect(() => {
     if (!user) {
       hasLoaded.current = false;
       lastUserRef.current = null;
+      setNotes({});
       return;
     }
 
@@ -185,25 +163,27 @@ export const useNotesSync = (user, dataKey) => {
 
     if (hasLoaded.current) return;
 
-    loadNotesFromFirebase();
-  }, [user, loadNotesFromFirebase]);
-
-  // Reload when page becomes visible (tab switching)
-  useEffect(() => {
-    if (!user) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && hasLoaded.current) {
-        console.log('Page visible - reloading notes from Firebase');
-        loadNotesFromFirebase();
+    const loadNotes = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const cloudNotes = docSnap.data()[dataKey];
+          if (cloudNotes) {
+            setNotes(cloudNotes);
+          }
+        }
+        hasLoaded.current = true;
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        hasLoaded.current = true;
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, loadNotesFromFirebase]);
+    loadNotes();
+  }, [user, dataKey]);
 
-  // Save notes when they change (debounced)
+  // Save notes when they change (minimal debounce)
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
@@ -213,10 +193,8 @@ export const useNotesSync = (user, dataKey) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        console.log('Saving notes to Firebase:', notes);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
-        console.log('Notes saved successfully');
       } catch (error) {
         console.error('Error saving notes:', error);
       }
@@ -232,41 +210,19 @@ export const useNotesSync = (user, dataKey) => {
   return [notes, setNotes];
 };
 
-// Simple sync for completedSets - no real-time listener to avoid interference
+// Simple sync for completedSets - Firebase offline persistence handles caching
 export const useCompletedSetsSync = (user, dataKey) => {
   const [sets, setSets] = useState({});
   const hasLoaded = useRef(false);
   const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
-  // Function to load sets from Firebase
-  const loadSetsFromFirebase = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(userDocRef);
-      if (docSnap.exists()) {
-        const cloudSets = docSnap.data()[dataKey];
-        if (cloudSets) {
-          console.log('Loaded sets from Firebase:', cloudSets);
-          setSets(cloudSets);
-        } else {
-          console.log('No sets found in Firebase');
-        }
-      }
-      hasLoaded.current = true;
-    } catch (error) {
-      console.error('Error loading sets:', error);
-      hasLoaded.current = true;
-    }
-  }, [user, dataKey]);
-
-  // Load once on mount or when user changes
+  // Load sets once on mount or when user changes
   useEffect(() => {
     if (!user) {
       hasLoaded.current = false;
       lastUserRef.current = null;
+      setSets({});
       return;
     }
 
@@ -279,25 +235,27 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     if (hasLoaded.current) return;
 
-    loadSetsFromFirebase();
-  }, [user, loadSetsFromFirebase]);
-
-  // Reload when page becomes visible (tab switching)
-  useEffect(() => {
-    if (!user) return;
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && hasLoaded.current) {
-        console.log('Page visible - reloading sets from Firebase');
-        loadSetsFromFirebase();
+    const loadSets = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const cloudSets = docSnap.data()[dataKey];
+          if (cloudSets) {
+            setSets(cloudSets);
+          }
+        }
+        hasLoaded.current = true;
+      } catch (error) {
+        console.error('Error loading sets:', error);
+        hasLoaded.current = true;
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, loadSetsFromFirebase]);
+    loadSets();
+  }, [user, dataKey]);
 
-  // Save when they change (debounced)
+  // Save sets when they change (minimal debounce)
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
@@ -307,10 +265,8 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        console.log('Saving sets to Firebase:', sets);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
-        console.log('Sets saved successfully');
       } catch (error) {
         console.error('Error saving sets:', error);
       }
