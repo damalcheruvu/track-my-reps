@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { 
   signInWithPopup, 
   signOut as firebaseSignOut,
@@ -48,11 +48,17 @@ export const useAuth = () => {
 export const useFirestoreSync = (user, localData, dataKey) => {
   const [syncedData, setSyncedData] = useState(localData);
   const [syncing, setSyncing] = useState(false);
+  const hasInitialized = useRef(false);
+  const isSaving = useRef(false);
 
   // Load data from Firestore when user signs in
   useEffect(() => {
     if (!user) {
-      setSyncedData(localData);
+      // Only set local data once on mount or when user changes
+      if (!hasInitialized.current) {
+        setSyncedData(localData);
+        hasInitialized.current = true;
+      }
       return;
     }
 
@@ -60,14 +66,19 @@ export const useFirestoreSync = (user, localData, dataKey) => {
     
     // Set up real-time listener
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      // Don't overwrite data while we're saving it
+      if (isSaving.current) return;
+      
       if (docSnap.exists()) {
         const cloudData = docSnap.data()[dataKey];
         if (cloudData) {
           setSyncedData(cloudData);
+          hasInitialized.current = true;
         }
       } else {
         // First time user - save local data to cloud
         setDoc(userDocRef, { [dataKey]: localData }, { merge: true });
+        hasInitialized.current = true;
       }
     });
 
@@ -76,23 +87,28 @@ export const useFirestoreSync = (user, localData, dataKey) => {
 
   // Save data to Firestore when it changes
   useEffect(() => {
-    if (!user || syncing) return;
+    if (!user || syncing || !hasInitialized.current) return;
 
     const saveToFirestore = async () => {
       try {
         setSyncing(true);
+        isSaving.current = true;
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: syncedData }, { merge: true });
       } catch (error) {
         console.error('Error syncing to cloud:', error);
       } finally {
         setSyncing(false);
+        // Wait a bit before allowing listener updates again
+        setTimeout(() => {
+          isSaving.current = false;
+        }, 500);
       }
     };
 
     const timeoutId = setTimeout(saveToFirestore, 1000); // Debounce saves
     return () => clearTimeout(timeoutId);
-  }, [user, syncedData, dataKey]);
+  }, [user, syncedData, dataKey, syncing]);
 
   return [syncedData, setSyncedData, syncing];
 };
