@@ -129,3 +129,60 @@ export const useFirestoreSync = (user, localData, dataKey) => {
 
   return [syncedData, setSyncedData, syncing];
 };
+
+// Simplified sync for notes only - no complex race condition handling needed
+export const useNotesSync = (user, dataKey) => {
+  const [notes, setNotes] = useState({});
+  const hasLoaded = useRef(false);
+  const saveTimeoutRef = useRef(null);
+
+  // Load notes once on mount
+  useEffect(() => {
+    if (!user || hasLoaded.current) return;
+
+    const loadNotes = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const cloudNotes = docSnap.data()[dataKey];
+          if (cloudNotes) {
+            setNotes(cloudNotes);
+          }
+        }
+        hasLoaded.current = true;
+      } catch (error) {
+        console.error('Error loading notes:', error);
+        hasLoaded.current = true;
+      }
+    };
+
+    loadNotes();
+  }, [user, dataKey]);
+
+  // Save notes when they change (debounced)
+  useEffect(() => {
+    if (!user || !hasLoaded.current) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
+      } catch (error) {
+        console.error('Error saving notes:', error);
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [user, notes, dataKey]);
+
+  return [notes, setNotes];
+};

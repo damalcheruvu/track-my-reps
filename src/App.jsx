@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { useAuth, useFirestoreSync } from './useFirebase'
+import { useAuth, useFirestoreSync, useNotesSync } from './useFirebase'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -48,8 +48,6 @@ function App() {
   const [view, setView] = useState('tracker'); // 'tracker' or 'planner'
   const hasMigrated = useRef(false);
   const initializedDays = useRef(new Set());
-  const [localNotes, setLocalNotes] = useState('');
-  const [notesSaved, setNotesSaved] = useState(true);
   
   // Sync weekly plan with Firebase (requires login)
   const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
@@ -70,18 +68,8 @@ function App() {
     'completedSets'
   );
 
-  // Workout notes for tracking weights/details
-  const [workoutNotes, setWorkoutNotes] = useFirestoreSync(
-    user,
-    {},
-    'workoutNotes'
-  );
-
-  // Load local notes when day changes
-  useEffect(() => {
-    setLocalNotes(workoutNotes[currentDay] || '');
-    setNotesSaved(true);
-  }, [currentDay, workoutNotes]);
+  // Workout notes - use simpler sync that won't interfere with sets
+  const [workoutNotes, setWorkoutNotes] = useNotesSync(user, 'workoutNotes');
 
   // Migrate old category-based data to new flat structure
   useEffect(() => {
@@ -249,16 +237,10 @@ function App() {
   };
 
   const updateWorkoutNote = (note) => {
-    setLocalNotes(note);
-    setNotesSaved(false);
-  };
-
-  const saveNotes = () => {
     setWorkoutNotes(prev => ({
       ...prev,
-      [currentDay]: localNotes
+      [currentDay]: note
     }));
-    setNotesSaved(true);
   };
 
   const progress = getTotalProgress();
@@ -472,17 +454,10 @@ function App() {
             <textarea
               className="workout-notes-input"
               placeholder="Track your weights, reps, and how you felt today..."
-              value={localNotes}
+              value={workoutNotes[currentDay] || ''}
               onChange={(e) => updateWorkoutNote(e.target.value)}
               rows={4}
             />
-            <button 
-              className={`save-notes-btn ${notesSaved ? 'saved' : ''}`}
-              onClick={saveNotes}
-              disabled={notesSaved}
-            >
-              {notesSaved ? '✓ Saved' : '💾 Save Notes'}
-            </button>
           </div>
 
           <div className="footer">

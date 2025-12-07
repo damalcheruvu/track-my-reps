@@ -272,44 +272,6 @@
   color: #9ca3af;
 }
 
-.save-notes-btn {
-  margin-top: 0.75rem;
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  background: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.save-notes-btn:hover:not(:disabled) {
-  background: #7c3aed;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
-}
-
-.save-notes-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.save-notes-btn.saved {
-  background: #10b981;
-  cursor: default;
-}
-
-.save-notes-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
 .footer {
   display: none; /* Hidden on mobile, use bottom nav instead */
 }
