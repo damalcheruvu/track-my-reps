@@ -142,7 +142,6 @@ export const useFirestoreSync = (user, localData, dataKey) => {
 export const useNotesSync = (user, dataKey) => {
   const [notes, setNotes] = useState({});
   const hasLoaded = useRef(false);
-  const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
   // Load notes once on mount or when user changes
@@ -183,28 +182,21 @@ export const useNotesSync = (user, dataKey) => {
     loadNotes();
   }, [user, dataKey]);
 
-  // Save notes when they change (minimal debounce)
+  // Save notes immediately when they change
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
+    const saveNotes = async () => {
       try {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
+        console.log('Notes saved');
       } catch (error) {
         console.error('Error saving notes:', error);
       }
-    }, 300);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
     };
+
+    saveNotes();
   }, [user, notes, dataKey]);
 
   return [notes, setNotes];
@@ -214,7 +206,6 @@ export const useNotesSync = (user, dataKey) => {
 export const useCompletedSetsSync = (user, dataKey) => {
   const [sets, setSets] = useState({});
   const hasLoaded = useRef(false);
-  const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
   // Load sets once on mount or when user changes
@@ -255,28 +246,21 @@ export const useCompletedSetsSync = (user, dataKey) => {
     loadSets();
   }, [user, dataKey]);
 
-  // Save sets when they change (minimal debounce)
+  // Save sets immediately when they change
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
+    const saveSets = async () => {
       try {
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
+        console.log('Sets saved');
       } catch (error) {
         console.error('Error saving sets:', error);
       }
-    }, 300);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
     };
+
+    saveSets();
   }, [user, sets, dataKey]);
 
   return [sets, setSets];
