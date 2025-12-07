@@ -208,3 +208,74 @@ export const useNotesSync = (user, dataKey) => {
 
   return [notes, setNotes];
 };
+
+// Simple sync for completedSets - no real-time listener to avoid interference
+export const useCompletedSetsSync = (user, dataKey) => {
+  const [sets, setSets] = useState({});
+  const hasLoaded = useRef(false);
+  const saveTimeoutRef = useRef(null);
+  const lastUserRef = useRef(null);
+
+  // Load once on mount or when user changes
+  useEffect(() => {
+    if (!user) {
+      hasLoaded.current = false;
+      lastUserRef.current = null;
+      return;
+    }
+
+    // Reset if different user
+    if (lastUserRef.current !== user.uid) {
+      hasLoaded.current = false;
+      lastUserRef.current = user.uid;
+      setSets({});
+    }
+
+    if (hasLoaded.current) return;
+
+    const loadSets = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const cloudSets = docSnap.data()[dataKey];
+          if (cloudSets) {
+            setSets(cloudSets);
+          }
+        }
+        hasLoaded.current = true;
+      } catch (error) {
+        console.error('Error loading sets:', error);
+        hasLoaded.current = true;
+      }
+    };
+
+    loadSets();
+  }, [user, dataKey]);
+
+  // Save when they change (debounced)
+  useEffect(() => {
+    if (!user || !hasLoaded.current) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
+      } catch (error) {
+        console.error('Error saving sets:', error);
+      }
+    }, 500); // Faster save for sets
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [user, sets, dataKey]);
+
+  return [sets, setSets];
+};

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { useAuth, useFirestoreSync, useNotesSync } from './useFirebase'
+import { useAuth, useFirestoreSync, useNotesSync, useCompletedSetsSync } from './useFirebase'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -63,12 +63,8 @@ function App() {
     return DAYS[today === 0 ? 6 : today - 1]; // Convert Sunday=0 to index 6
   });
 
-  // Sync completed sets with Firebase (requires login)
-  const [completedSets, setCompletedSets] = useFirestoreSync(
-    user,
-    {},
-    'completedSets'
-  );
+  // Sync completed sets with Firebase (requires login) - using simple sync
+  const [completedSets, setCompletedSets] = useCompletedSetsSync(user, 'completedSets');
 
   // Workout notes - use simpler sync that won't interfere with sets
   const [workoutNotes, setWorkoutNotes] = useNotesSync(user, 'workoutNotes');
