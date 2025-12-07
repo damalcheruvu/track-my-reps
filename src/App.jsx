@@ -153,7 +153,7 @@ function App() {
       );
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
     }
-  }, [currentDay, weeklyPlan, completedSets, setCompletedSets]);
+  }, [currentDay, weeklyPlan, setCompletedSets]); // Removed completedSets from deps
 
   // Save to localStorage as backup when not signed in
   useEffect(() => {
