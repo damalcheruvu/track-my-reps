@@ -51,7 +51,7 @@ export const useFirestoreSync = (user, localData, dataKey) => {
   const hasInitialized = useRef(false);
   const isSaving = useRef(false);
   const saveTimeoutRef = useRef(null);
-  const lastLocalUpdateRef = useRef(Date.now());
+  const lastLocalUpdateRef = useRef(0); // Start at 0, not Date.now()
   const lastUserRef = useRef(null);
 
   // Load data from Firestore when user signs in
@@ -76,20 +76,29 @@ export const useFirestoreSync = (user, localData, dataKey) => {
     
     // Set up real-time listener
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      // Don't overwrite data while we're saving or within 2 seconds of local update
+      // Don't overwrite data while we're actively saving
+      if (isSaving.current) {
+        console.log('Skipping snapshot update - currently saving');
+        return;
+      }
+      
+      // Only block updates if we've recently made a local change (within 1 second)
       const timeSinceLastUpdate = Date.now() - lastLocalUpdateRef.current;
-      if (isSaving.current || timeSinceLastUpdate < 2000) {
+      if (hasInitialized.current && timeSinceLastUpdate < 1000) {
+        console.log('Skipping snapshot update - recent local change');
         return;
       }
       
       if (docSnap.exists()) {
         const cloudData = docSnap.data()[dataKey];
-        if (cloudData) {
+        if (cloudData !== undefined) {
+          console.log(`Loading ${dataKey} from Firebase:`, cloudData);
           setSyncedData(cloudData);
           hasInitialized.current = true;
         }
       } else {
         // First time user - save local data to cloud
+        console.log(`First time - saving initial ${dataKey} to Firebase`);
         setDoc(userDocRef, { [dataKey]: localData }, { merge: true });
         hasInitialized.current = true;
       }
@@ -112,22 +121,24 @@ export const useFirestoreSync = (user, localData, dataKey) => {
 
     const saveToFirestore = async () => {
       try {
+        console.log(`Saving ${dataKey} to Firebase:`, syncedData);
         setSyncing(true);
         isSaving.current = true;
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: syncedData }, { merge: true });
+        console.log(`✓ ${dataKey} saved successfully`);
       } catch (error) {
-        console.error('Error syncing to cloud:', error);
+        console.error(`Error syncing ${dataKey}:`, error);
       } finally {
         setSyncing(false);
-        // Keep isSaving flag for longer to prevent race conditions
+        // Keep isSaving flag for a bit to prevent race conditions
         setTimeout(() => {
           isSaving.current = false;
-        }, 1500);
+        }, 500);
       }
     };
 
-    saveTimeoutRef.current = setTimeout(saveToFirestore, 1000); // Debounce saves
+    saveTimeoutRef.current = setTimeout(saveToFirestore, 500); // Quick debounce
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
