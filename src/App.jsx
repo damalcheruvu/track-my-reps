@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
-import { useAuth, useFirestoreSync } from './useFirebase'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
-import { db } from './firebase'
+import { useAuth } from './useSupabase'
+import { useSupabaseSync } from './useSupabase'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -73,50 +72,36 @@ function App() {
   const completedSetsRef = useRef({});
   const lastUserRef = useRef(null);
   
-  // Sync weekly plan with Firebase (requires login)
-  const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
+  // Use Supabase for data storage
+  const [weeklyPlan, setWeeklyPlan, saveWeeklyPlan] = useSupabaseSync(
     user, 
     DEFAULT_WEEKLY_PLAN, 
-    'weeklyPlan'
+    'weekly_plans'
   );
+  
+  const [completedSets, setCompletedSets, saveCompletedSets] = useSupabaseSync(
+    user,
+    {},
+    'completed_sets'
+  );
+  
+  // Auto-save whenever data changes
+  useEffect(() => {
+    if (user && weeklyPlan) {
+      saveWeeklyPlan(weeklyPlan);
+    }
+  }, [weeklyPlan]);
+
+  useEffect(() => {
+    if (user && completedSets) {
+      saveCompletedSets(completedSets);
+    }
+  }, [completedSets]);
   
   const [currentDay, setCurrentDay] = useState(() => {
     const today = new Date().getDay();
     return DAYS[today === 0 ? 6 : today - 1]; // Convert Sunday=0 to index 6
   });
-
-  // Sync completed sets with Firebase - SIMPLE DIRECT SAVE/LOAD
-  const [completedSets, setCompletedSets] = useState({});
-  const hasSynced = useRef({ completedSets: false });
-
-  // Load data from Firebase on mount or user change
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) {
-        setCompletedSets({});
-        hasSynced.current = { completedSets: false };
-        return;
-      }
-
-      console.log('🔄 Loading workout data from Firebase...');
-      try {
-        // Load completed sets
-        const setsDoc = await getDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'));
-        if (setsDoc.exists()) {
-          console.log('✅ Loaded completedSets:', setsDoc.data());
-          setCompletedSets(setsDoc.data());
-        } else {
-          console.log('ℹ️ No completedSets found in Firebase');
-        }
-        
-        hasSynced.current = { completedSets: true };
-      } catch (error) {
-        console.error('❌ Error loading workout data:', error);
-      }
-    };
-
-    loadData();
-  }, [user]);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -228,18 +213,6 @@ function App() {
     initializedDays.current.add(currentDay);
   }, [currentDay, weeklyPlan]);
 
-  // Simple direct save to Firebase
-  const saveCompletedSets = async (newSets) => {
-    if (!user) return;
-    try {
-      console.log('💾 Saving completedSets to Firebase...');
-      await setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), newSets);
-      console.log('✅ Saved completedSets successfully');
-    } catch (error) {
-      console.error('❌ Error saving completedSets:', error);
-    }
-  };
-
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
@@ -257,9 +230,7 @@ function App() {
           }
         });
         initialState[key] = true;
-        const newState = { ...prev, [currentDay]: initialState };
-        saveCompletedSets(newState); // Save immediately
-        return newState;
+        return { ...prev, [currentDay]: initialState };
       }
       
       // Check if previous sets are completed (sequential checking)
@@ -271,15 +242,13 @@ function App() {
         }
       }
       
-      const newState = {
+      return {
         ...prev,
         [currentDay]: {
           ...dayState,
           [key]: !dayState[key]
         }
       };
-      saveCompletedSets(newState); // Save immediately
-      return newState;
     });
   };
 
@@ -296,9 +265,7 @@ function App() {
         }
       });
       
-      const newState = { ...completedSets, [currentDay]: resetState };
-      setCompletedSets(newState);
-      saveCompletedSets(newState); // Save immediately
+      setCompletedSets({ ...completedSets, [currentDay]: resetState });
     }
   };
 
@@ -438,15 +405,9 @@ function App() {
               style={{backgroundColor: '#dc3545', marginRight: '10px'}}
               onClick={() => {
                 if (window.confirm('⚠️ Reset to default workout plan? This will delete your current plan and progress!')) {
-                  // Reset local state immediately
+                  // Reset local state (auto-save will handle Supabase)
                   setWeeklyPlan(DEFAULT_WEEKLY_PLAN);
                   setCompletedSets({});
-                  
-                  // Try to save to Firebase (might fail if quota exceeded)
-                  if (user) {
-                    setDoc(doc(db, 'users', user.uid, 'workoutData', 'weeklyPlan'), DEFAULT_WEEKLY_PLAN).catch(e => console.log('Firebase save failed:', e));
-                    setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), {}).catch(e => console.log('Firebase save failed:', e));
-                  }
                   
                   alert('✅ Reset complete! Your new workout plan is loaded.');
                   setView('tracker');
