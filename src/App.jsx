@@ -47,6 +47,7 @@ function App() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
   const [view, setView] = useState('tracker'); // 'tracker' or 'planner'
   const hasMigrated = useRef(false);
+  const initializedDays = useRef(new Set());
   
   // Local state for when not signed in
   const [localWeeklyPlan] = useState(() => {
@@ -143,17 +144,23 @@ function App() {
   // Initialize completedSets for current day if not exists
   useEffect(() => {
     if (!hasMigrated.current) return; // Wait for migration to complete
+    if (initializedDays.current.has(currentDay)) return; // Already initialized this day
     
     const todayPlan = weeklyPlan[currentDay];
     if (!todayPlan || todayPlan.isRest || !todayPlan.exercises) return;
     
     if (!completedSets[currentDay]) {
+      console.log('Initializing completedSets for', currentDay);
       const newState = todayPlan.exercises.map(exercise => 
         Array(exercise.sets).fill(false)
       );
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
+      initializedDays.current.add(currentDay);
+    } else {
+      // Already has data, just mark as initialized
+      initializedDays.current.add(currentDay);
     }
-  }, [currentDay, weeklyPlan, setCompletedSets]); // Removed completedSets from deps
+  }, [currentDay, weeklyPlan, completedSets, setCompletedSets]);
 
   // Save to localStorage as backup when not signed in
   useEffect(() => {
