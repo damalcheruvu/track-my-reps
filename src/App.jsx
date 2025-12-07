@@ -10,38 +10,58 @@ const DEFAULT_WEEKLY_PLAN = {
   Monday: {
     isRest: false,
     exercises: [
-      { name: 'Bench Press', sets: 3, reps: 8, weight: null },
-      { name: 'Incline Dumbbell Press', sets: 3, reps: 10, weight: null },
-      { name: 'Cable Flyes', sets: 3, reps: 12, weight: null },
+      { name: 'Back Squat', sets: 4, reps: '', weight: null },
+      { name: 'Bench Press', sets: 4, reps: '', weight: null },
+      { name: 'Wide Row', sets: 3, reps: '', weight: null },
+      { name: 'RDL', sets: 3, reps: '', weight: null },
+      { name: 'Barbell Curl', sets: 3, reps: '', weight: null },
+      { name: 'Behind-Back Wrist Curl', sets: 2, reps: '', weight: null },
     ]
   },
   Tuesday: {
     isRest: false,
     exercises: [
-      { name: 'Pull-ups', sets: 3, reps: 8, weight: null },
-      { name: 'Barbell Rows', sets: 3, reps: 10, weight: null },
-      { name: 'Lat Pulldown', sets: 3, reps: 12, weight: null },
+      { name: 'HIIT: 20s/40s ×10', sets: 1, reps: '10 rounds', weight: null },
     ]
   },
-  Wednesday: { isRest: true, exercises: [] },
+  Wednesday: {
+    isRest: false,
+    exercises: [
+      { name: 'Deadlift', sets: 4, reps: '', weight: null },
+      { name: 'OHP', sets: 4, reps: '', weight: null },
+      { name: 'Underhand Row', sets: 3, reps: '', weight: null },
+      { name: 'Barbell Curl', sets: 3, reps: '', weight: null },
+      { name: 'Reverse Curl', sets: 2, reps: '', weight: null },
+      { name: 'Barbell Hold', sets: 2, reps: '', weight: null },
+    ]
+  },
   Thursday: {
     isRest: false,
     exercises: [
-      { name: 'Squats', sets: 4, reps: 10, weight: null },
-      { name: 'Leg Press', sets: 3, reps: 12, weight: null },
-      { name: 'Leg Curls', sets: 3, reps: 12, weight: null },
+      { name: 'Steady Cardio', sets: 1, reps: '20-30 min', weight: null },
     ]
   },
   Friday: {
     isRest: false,
     exercises: [
-      { name: 'Overhead Press', sets: 3, reps: 10, weight: null },
-      { name: 'Lateral Raises', sets: 3, reps: 12, weight: null },
-      { name: 'Barbell Curls', sets: 3, reps: 10, weight: null },
-      { name: 'Tricep Dips', sets: 3, reps: 10, weight: null },
+      { name: 'Front Squat', sets: 4, reps: '', weight: null },
+      { name: 'Incline Bench', sets: 4, reps: '', weight: null },
+      { name: 'Med Row', sets: 3, reps: '', weight: null },
+      { name: 'Sumo DL', sets: 3, reps: '', weight: null },
+      { name: 'Wrist Curl Up', sets: 2, reps: '', weight: null },
+      { name: 'Wrist Curl Down', sets: 2, reps: '', weight: null },
     ]
   },
-  Saturday: { isRest: true, exercises: [] },
+  Saturday: {
+    isRest: false,
+    exercises: [
+      { name: 'Light Back Squat', sets: 4, reps: '', weight: null },
+      { name: 'Light OHP', sets: 4, reps: '', weight: null },
+      { name: 'Row Variation', sets: 3, reps: '', weight: null },
+      { name: 'RDL/GM', sets: 3, reps: '', weight: null },
+      { name: 'Curl+RevCurl', sets: 3, reps: '', weight: null },
+    ]
+  },
   Sunday: { isRest: true, exercises: [] },
 };
 
