@@ -252,6 +252,14 @@ function App() {
     });
   };
 
+  const removeCategory = (day, categoryIndex) => {
+    setWeeklyPlan(prev => {
+      const newPlan = { ...prev };
+      newPlan[day].categories = newPlan[day].categories.filter((_, i) => i !== categoryIndex);
+      return newPlan;
+    });
+  };
+
   const updateWorkoutNote = (day, note) => {
     setWorkoutNotes(prev => ({
       ...prev,
