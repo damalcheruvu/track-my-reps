@@ -497,6 +497,13 @@ function App() {
           <span>Tracker</span>
         </button>
         <button 
+          className={`nav-item ${view === 'planner' ? 'active' : ''}`}
+          onClick={() => setView('planner')}
+        >
+          <div className="nav-icon">📅</div>
+          <span>Plan</span>
+        </button>
+        <button 
           className="nav-item"
           onClick={resetAll}
         >

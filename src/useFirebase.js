@@ -169,6 +169,7 @@ export const useNotesSync = (user, dataKey) => {
         if (docSnap.exists()) {
           const cloudNotes = docSnap.data()[dataKey];
           if (cloudNotes) {
+            console.log('Loaded notes from Firebase:', cloudNotes);
             setNotes(cloudNotes);
           }
         }
@@ -192,8 +193,10 @@ export const useNotesSync = (user, dataKey) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log('Saving notes to Firebase:', notes);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
+        console.log('Notes saved successfully');
       } catch (error) {
         console.error('Error saving notes:', error);
       }
@@ -240,6 +243,7 @@ export const useCompletedSetsSync = (user, dataKey) => {
         if (docSnap.exists()) {
           const cloudSets = docSnap.data()[dataKey];
           if (cloudSets) {
+            console.log('Loaded sets from Firebase:', cloudSets);
             setSets(cloudSets);
           }
         }
@@ -263,8 +267,10 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log('Saving sets to Firebase:', sets);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
+        console.log('Sets saved successfully');
       } catch (error) {
         console.error('Error saving sets:', error);
       }
