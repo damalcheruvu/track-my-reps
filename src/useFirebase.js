@@ -50,6 +50,8 @@ export const useFirestoreSync = (user, localData, dataKey) => {
   const [syncing, setSyncing] = useState(false);
   const hasInitialized = useRef(false);
   const isSaving = useRef(false);
+  const saveTimeoutRef = useRef(null);
+  const lastLocalUpdateRef = useRef(Date.now());
 
   // Load data from Firestore when user signs in
   useEffect(() => {
@@ -66,8 +68,11 @@ export const useFirestoreSync = (user, localData, dataKey) => {
     
     // Set up real-time listener
     const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      // Don't overwrite data while we're saving it
-      if (isSaving.current) return;
+      // Don't overwrite data while we're saving or within 2 seconds of local update
+      const timeSinceLastUpdate = Date.now() - lastLocalUpdateRef.current;
+      if (isSaving.current || timeSinceLastUpdate < 2000) {
+        return;
+      }
       
       if (docSnap.exists()) {
         const cloudData = docSnap.data()[dataKey];
@@ -89,6 +94,14 @@ export const useFirestoreSync = (user, localData, dataKey) => {
   useEffect(() => {
     if (!user || syncing || !hasInitialized.current) return;
 
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Mark that we just had a local update
+    lastLocalUpdateRef.current = Date.now();
+
     const saveToFirestore = async () => {
       try {
         setSyncing(true);
@@ -99,15 +112,19 @@ export const useFirestoreSync = (user, localData, dataKey) => {
         console.error('Error syncing to cloud:', error);
       } finally {
         setSyncing(false);
-        // Wait a bit before allowing listener updates again
+        // Keep isSaving flag for longer to prevent race conditions
         setTimeout(() => {
           isSaving.current = false;
-        }, 500);
+        }, 1500);
       }
     };
 
-    const timeoutId = setTimeout(saveToFirestore, 1000); // Debounce saves
-    return () => clearTimeout(timeoutId);
+    saveTimeoutRef.current = setTimeout(saveToFirestore, 1000); // Debounce saves
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [user, syncedData, dataKey, syncing]);
 
   return [syncedData, setSyncedData, syncing];

@@ -49,16 +49,10 @@ function App() {
   const hasMigrated = useRef(false);
   const initializedDays = useRef(new Set());
   
-  // Local state for when not signed in
-  const [localWeeklyPlan] = useState(() => {
-    const saved = localStorage.getItem('weeklyWorkoutPlan');
-    return saved ? JSON.parse(saved) : DEFAULT_WEEKLY_PLAN;
-  });
-
-  // Sync weekly plan with Firebase if signed in, otherwise use local
+  // Sync weekly plan with Firebase (requires login)
   const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
     user, 
-    localWeeklyPlan, 
+    DEFAULT_WEEKLY_PLAN, 
     'weeklyPlan'
   );
   
@@ -67,31 +61,10 @@ function App() {
     return DAYS[today === 0 ? 6 : today - 1]; // Convert Sunday=0 to index 6
   });
 
-  // Save to localStorage as backup when not signed in
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem('weeklyWorkoutPlan', JSON.stringify(weeklyPlan));
-    }
-  }, [weeklyPlan, user]);
-
-  // Load completion state from localStorage or initialize
-  const [localCompletedSets] = useState(() => {
-    const today = new Date().toDateString();
-    const saved = localStorage.getItem('workoutState');
-    
-    if (saved) {
-      const { date, state } = JSON.parse(saved);
-      if (date === today) {
-        return state;
-      }
-    }
-    return {};
-  });
-
-  // Sync completed sets with Firebase if signed in, otherwise use local
+  // Sync completed sets with Firebase (requires login)
   const [completedSets, setCompletedSets] = useFirestoreSync(
     user,
-    localCompletedSets,
+    {},
     'completedSets'
   );
 
@@ -161,17 +134,6 @@ function App() {
       initializedDays.current.add(currentDay);
     }
   }, [currentDay, weeklyPlan, completedSets, setCompletedSets]);
-
-  // Save to localStorage as backup when not signed in
-  useEffect(() => {
-    if (!user) {
-      const today = new Date().toDateString();
-      localStorage.setItem('workoutState', JSON.stringify({
-        date: today,
-        state: completedSets
-      }));
-    }
-  }, [completedSets, user]);
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
@@ -329,13 +291,6 @@ function App() {
             <p className="privacy-note">
               Your data is private and synced securely to your Google account
             </p>
-
-            <button className="continue-local-btn" onClick={() => {
-              // Allow using app without sign-in (local storage only)
-              alert('Note: Without signing in, your data will only be saved on this device and may be lost if you clear browser data.');
-            }}>
-              Continue without sign-in (Local only)
-            </button>
           </div>
         </div>
       </div>

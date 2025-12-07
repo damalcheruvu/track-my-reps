@@ -720,21 +720,6 @@
   margin-bottom: 1.5rem;
 }
 
-.continue-local-btn {
-  background: transparent;
-  color: #6b7280;
-  border: none;
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 0.2s ease;
-}
-
-.continue-local-btn:hover {
-  color: #374151;
-}
-
 /* User Info */
 .user-info {
   display: flex;
