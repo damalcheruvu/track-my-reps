@@ -67,17 +67,14 @@ function App() {
 
   // Sync completed sets with Firebase - SIMPLE DIRECT SAVE/LOAD
   const [completedSets, setCompletedSets] = useState({});
-  const [workoutNotes, setWorkoutNotes] = useState({});
-  const hasSynced = useRef({ completedSets: false, workoutNotes: false });
-  const notesTimeoutRef = useRef(null); // For debouncing notes
+  const hasSynced = useRef({ completedSets: false });
 
   // Load data from Firebase on mount or user change
   useEffect(() => {
     const loadData = async () => {
       if (!user) {
         setCompletedSets({});
-        setWorkoutNotes({});
-        hasSynced.current = { completedSets: false, workoutNotes: false };
+        hasSynced.current = { completedSets: false };
         return;
       }
 
@@ -92,16 +89,7 @@ function App() {
           console.log('ℹ️ No completedSets found in Firebase');
         }
         
-        // Load workout notes
-        const notesDoc = await getDoc(doc(db, 'users', user.uid, 'workoutData', 'workoutNotes'));
-        if (notesDoc.exists()) {
-          console.log('✅ Loaded workoutNotes:', notesDoc.data());
-          setWorkoutNotes(notesDoc.data());
-        } else {
-          console.log('ℹ️ No workoutNotes found in Firebase');
-        }
-        
-        hasSynced.current = { completedSets: true, workoutNotes: true };
+        hasSynced.current = { completedSets: true };
       } catch (error) {
         console.error('❌ Error loading workout data:', error);
       }
@@ -109,8 +97,6 @@ function App() {
 
     loadData();
   }, [user]);
-
-  // Workout notes - no longer using sync hook
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -232,26 +218,6 @@ function App() {
     } catch (error) {
       console.error('❌ Error saving completedSets:', error);
     }
-  };
-
-  const saveWorkoutNotes = async (newNotes) => {
-    if (!user) return;
-    
-    // Clear previous timeout
-    if (notesTimeoutRef.current) {
-      clearTimeout(notesTimeoutRef.current);
-    }
-    
-    // Debounce: save 1 second after user stops typing
-    notesTimeoutRef.current = setTimeout(async () => {
-      try {
-        console.log('💾 Saving workoutNotes to Firebase...');
-        await setDoc(doc(db, 'users', user.uid, 'workoutData', 'workoutNotes'), newNotes);
-        console.log('✅ Saved workoutNotes successfully');
-      } catch (error) {
-        console.error('❌ Error saving workoutNotes:', error);
-      }
-    }, 1000);
   };
 
 
@@ -377,15 +343,6 @@ function App() {
       };
       return newPlan;
     });
-  };
-
-  const updateWorkoutNote = (note) => {
-    const newNotes = {
-      ...workoutNotes,
-      [currentDay]: note
-    };
-    setWorkoutNotes(newNotes);
-    saveWorkoutNotes(newNotes); // Save immediately
   };
 
   const progress = getTotalProgress();
@@ -592,17 +549,6 @@ function App() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="workout-notes-section">
-            <label className="notes-label">📝 Workout Notes</label>
-            <textarea
-              className="workout-notes-input"
-              placeholder="Track your weights, reps, and how you felt today..."
-              value={workoutNotes[currentDay] || ''}
-              onChange={(e) => updateWorkoutNote(e.target.value)}
-              rows={4}
-            />
           </div>
 
           <div className="footer">
