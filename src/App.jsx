@@ -100,16 +100,33 @@ function App() {
     'workoutNotes'
   );
 
+  // Migrate old category-based data to new flat structure
+  useEffect(() => {
+    let needsMigration = false;
+    const migratedPlan = { ...weeklyPlan };
+    
+    DAYS.forEach(day => {
+      if (migratedPlan[day].categories && !migratedPlan[day].exercises) {
+        needsMigration = true;
+        // Flatten all exercises from all categories
+        migratedPlan[day].exercises = migratedPlan[day].categories.flatMap(cat => cat.exercises);
+        delete migratedPlan[day].categories;
+      }
+    });
+    
+    if (needsMigration) {
+      setWeeklyPlan(migratedPlan);
+    }
+  }, []);
+
   // Initialize completedSets for current day if not exists
   useEffect(() => {
     const todayPlan = weeklyPlan[currentDay];
     if (!todayPlan || todayPlan.isRest) return;
     
     if (!completedSets[currentDay]) {
-      const newState = todayPlan.categories.map(category => 
-        category.exercises.map(exercise => 
-          Array(exercise.sets).fill(false)
-        )
+      const newState = todayPlan.exercises.map(exercise => 
+        Array(exercise.sets).fill(false)
       );
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
     }
