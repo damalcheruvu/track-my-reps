@@ -48,6 +48,7 @@ function App() {
   const [view, setView] = useState('tracker'); // 'tracker' or 'planner'
   const hasMigrated = useRef(false);
   const initializedDays = useRef(new Set());
+  const completedSetsRef = useRef({});
   
   // Sync weekly plan with Firebase (requires login)
   const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
@@ -70,6 +71,11 @@ function App() {
 
   // Workout notes - use simpler sync that won't interfere with sets
   const [workoutNotes, setWorkoutNotes] = useNotesSync(user, 'workoutNotes');
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    completedSetsRef.current = completedSets;
+  }, [completedSets]);
 
   // Migrate old category-based data to new flat structure
   useEffect(() => {
@@ -118,21 +124,18 @@ function App() {
     const todayPlan = weeklyPlan[currentDay];
     if (!todayPlan || todayPlan.isRest || !todayPlan.exercises) return;
     
-    // Only initialize if completely missing, don't check completedSets value
-    setCompletedSets(prev => {
-      if (!prev[currentDay]) {
-        console.log('Initializing completedSets for', currentDay);
-        const newState = todayPlan.exercises.map(exercise => 
-          Array(exercise.sets).fill(false)
-        );
-        initializedDays.current.add(currentDay);
-        return { ...prev, [currentDay]: newState };
-      }
-      // Already has data, just mark as initialized
-      initializedDays.current.add(currentDay);
-      return prev;
-    });
-  }, [currentDay, weeklyPlan, setCompletedSets]);
+    // Use ref to check current value, avoiding dependency on completedSets
+    if (!completedSetsRef.current[currentDay]) {
+      console.log('Initializing completedSets for', currentDay);
+      const newState = todayPlan.exercises.map(exercise => 
+        Array(exercise.sets).fill(false)
+      );
+      setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
+    }
+    
+    initializedDays.current.add(currentDay);
+  }, [currentDay, weeklyPlan]);
+
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
