@@ -232,6 +232,12 @@ function App() {
 
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
+      
+      // If no categories exist, create a default one
+      if (newPlan[day].categories.length === 0) {
+        newPlan[day].categories.push({ name: 'Exercises', exercises: [] });
+      }
+      
       newPlan[day].categories[categoryIndex].exercises.push({ name, sets, reps });
       return newPlan;
     });
@@ -394,6 +400,15 @@ function App() {
                       </button>
                     </div>
                   ))}
+                  
+                  {weeklyPlan[day].categories.length === 0 && (
+                    <button 
+                      className="add-exercise-btn"
+                      onClick={() => addExercise(day, 0)}
+                    >
+                      + Add Exercise
+                    </button>
+                  )}
                   
                   <div className="workout-notes-section">
                     <label className="notes-label">Quick Notes (weights, how you felt, etc.)</label>
