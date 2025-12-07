@@ -436,20 +436,20 @@ function App() {
             <button 
               className="nav-button" 
               style={{backgroundColor: '#dc3545', marginRight: '10px'}}
-              onClick={async () => {
+              onClick={() => {
                 if (window.confirm('⚠️ Reset to default workout plan? This will delete your current plan and progress!')) {
-                  try {
-                    // Delete from Firebase
-                    await setDoc(doc(db, 'users', user.uid, 'workoutData', 'weeklyPlan'), DEFAULT_WEEKLY_PLAN);
-                    await setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), {});
-                    // Reset local state
-                    setWeeklyPlan(DEFAULT_WEEKLY_PLAN);
-                    setCompletedSets({});
-                    alert('✅ Reset complete! Your new workout plan is loaded.');
-                  } catch (error) {
-                    console.error('Error resetting:', error);
-                    alert('Error resetting. Try again.');
+                  // Reset local state immediately
+                  setWeeklyPlan(DEFAULT_WEEKLY_PLAN);
+                  setCompletedSets({});
+                  
+                  // Try to save to Firebase (might fail if quota exceeded)
+                  if (user) {
+                    setDoc(doc(db, 'users', user.uid, 'workoutData', 'weeklyPlan'), DEFAULT_WEEKLY_PLAN).catch(e => console.log('Firebase save failed:', e));
+                    setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), {}).catch(e => console.log('Firebase save failed:', e));
                   }
+                  
+                  alert('✅ Reset complete! Your new workout plan is loaded.');
+                  setView('tracker');
                 }
               }}
             >
