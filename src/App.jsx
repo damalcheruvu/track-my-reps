@@ -7,60 +7,40 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const DEFAULT_WEEKLY_PLAN = {
   Monday: {
     isRest: false,
-    categories: [
-      {
-        name: 'Chest',
-        exercises: [
-          { name: 'Bench Press', sets: 3, reps: 8, weight: null },
-          { name: 'Incline Dumbbell Press', sets: 3, reps: 10, weight: null },
-          { name: 'Cable Flyes', sets: 3, reps: 12, weight: null },
-        ]
-      }
+    exercises: [
+      { name: 'Bench Press', sets: 3, reps: 8, weight: null },
+      { name: 'Incline Dumbbell Press', sets: 3, reps: 10, weight: null },
+      { name: 'Cable Flyes', sets: 3, reps: 12, weight: null },
     ]
   },
   Tuesday: {
     isRest: false,
-    categories: [
-      {
-        name: 'Back',
-        exercises: [
-          { name: 'Pull-ups', sets: 3, reps: 8, weight: null },
-          { name: 'Barbell Rows', sets: 3, reps: 10, weight: null },
-          { name: 'Lat Pulldown', sets: 3, reps: 12, weight: null },
-        ]
-      }
+    exercises: [
+      { name: 'Pull-ups', sets: 3, reps: 8, weight: null },
+      { name: 'Barbell Rows', sets: 3, reps: 10, weight: null },
+      { name: 'Lat Pulldown', sets: 3, reps: 12, weight: null },
     ]
   },
-  Wednesday: { isRest: true, categories: [] },
+  Wednesday: { isRest: true, exercises: [] },
   Thursday: {
     isRest: false,
-    categories: [
-      {
-        name: 'Legs',
-        exercises: [
-          { name: 'Squats', sets: 4, reps: 10, weight: null },
-          { name: 'Leg Press', sets: 3, reps: 12, weight: null },
-          { name: 'Leg Curls', sets: 3, reps: 12, weight: null },
-        ]
-      }
+    exercises: [
+      { name: 'Squats', sets: 4, reps: 10, weight: null },
+      { name: 'Leg Press', sets: 3, reps: 12, weight: null },
+      { name: 'Leg Curls', sets: 3, reps: 12, weight: null },
     ]
   },
   Friday: {
     isRest: false,
-    categories: [
-      {
-        name: 'Shoulders & Arms',
-        exercises: [
-          { name: 'Overhead Press', sets: 3, reps: 10, weight: null },
-          { name: 'Lateral Raises', sets: 3, reps: 12, weight: null },
-          { name: 'Barbell Curls', sets: 3, reps: 10, weight: null },
-          { name: 'Tricep Dips', sets: 3, reps: 10, weight: null },
-        ]
-      }
+    exercises: [
+      { name: 'Overhead Press', sets: 3, reps: 10, weight: null },
+      { name: 'Lateral Raises', sets: 3, reps: 12, weight: null },
+      { name: 'Barbell Curls', sets: 3, reps: 10, weight: null },
+      { name: 'Tricep Dips', sets: 3, reps: 10, weight: null },
     ]
   },
-  Saturday: { isRest: true, categories: [] },
-  Sunday: { isRest: true, categories: [] },
+  Saturday: { isRest: true, exercises: [] },
+  Sunday: { isRest: true, exercises: [] },
 };
 
 function App() {
@@ -146,37 +126,27 @@ function App() {
     }
   }, [completedSets, user]);
 
-  const toggleSet = (categoryIndex, exerciseIndex, setIndex) => {
+  const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
       const dayState = prev[currentDay] || [];
       
       // Ensure dayState is properly initialized
       if (dayState.length === 0) {
         const todayPlan = weeklyPlan[currentDay];
-        const initialState = todayPlan.categories.map(category => 
-          category.exercises.map(exercise => 
-            Array(exercise.sets).fill(false)
-          )
+        const initialState = todayPlan.exercises.map(exercise => 
+          Array(exercise.sets).fill(false)
         );
-        const newState = initialState.map((category, ci) =>
-          category.map((exercise, ei) =>
-            exercise.map((set, si) =>
-              ci === categoryIndex && ei === exerciseIndex && si === setIndex
-                ? true
-                : set
-            )
+        const newState = initialState.map((exercise, ei) =>
+          exercise.map((set, si) =>
+            ei === exerciseIndex && si === setIndex ? true : set
           )
         );
         return { ...prev, [currentDay]: newState };
       }
       
-      const newDayState = dayState.map((category, ci) =>
-        category.map((exercise, ei) =>
-          exercise.map((set, si) =>
-            ci === categoryIndex && ei === exerciseIndex && si === setIndex
-              ? !set
-              : set
-          )
+      const newDayState = dayState.map((exercise, ei) =>
+        exercise.map((set, si) =>
+          ei === exerciseIndex && si === setIndex ? !set : set
         )
       );
       return { ...prev, [currentDay]: newDayState };
@@ -186,10 +156,8 @@ function App() {
   const resetAll = () => {
     if (window.confirm('Reset all checkboxes for today?')) {
       const todayPlan = weeklyPlan[currentDay];
-      const newState = todayPlan.categories.map(category => 
-        category.exercises.map(exercise => 
-          Array(exercise.sets).fill(false)
-        )
+      const newState = todayPlan.exercises.map(exercise => 
+        Array(exercise.sets).fill(false)
       );
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
     }
@@ -199,12 +167,10 @@ function App() {
     const dayState = completedSets[currentDay] || [];
     let completed = 0;
     let total = 0;
-    dayState.forEach(category => {
-      category.forEach(exercise => {
-        exercise.forEach(set => {
-          total++;
-          if (set) completed++;
-        });
+    dayState.forEach(exercise => {
+      exercise.forEach(set => {
+        total++;
+        if (set) completed++;
       });
     });
     return { completed, total, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 };
@@ -217,12 +183,12 @@ function App() {
       [day]: {
         ...prev[day],
         isRest: !prev[day].isRest,
-        categories: !prev[day].isRest ? [] : prev[day].categories
+        exercises: !prev[day].isRest ? [] : prev[day].exercises
       }
     }));
   };
 
-  const addExercise = (day, categoryIndex) => {
+  const addExercise = (day) => {
     const name = prompt('Exercise name:');
     if (!name) return;
     const sets = parseInt(prompt('Number of sets:', '3'));
@@ -232,30 +198,15 @@ function App() {
 
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
-      
-      // If no categories exist, create a default one
-      if (newPlan[day].categories.length === 0) {
-        newPlan[day].categories.push({ name: 'Exercises', exercises: [] });
-      }
-      
-      newPlan[day].categories[categoryIndex].exercises.push({ name, sets, reps });
+      newPlan[day].exercises.push({ name, sets, reps });
       return newPlan;
     });
   };
 
-  const removeExercise = (day, categoryIndex, exerciseIndex) => {
+  const removeExercise = (day, exerciseIndex) => {
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
-      newPlan[day].categories[categoryIndex].exercises = 
-        newPlan[day].categories[categoryIndex].exercises.filter((_, i) => i !== exerciseIndex);
-      return newPlan;
-    });
-  };
-
-  const removeCategory = (day, categoryIndex) => {
-    setWeeklyPlan(prev => {
-      const newPlan = { ...prev };
-      newPlan[day].categories = newPlan[day].categories.filter((_, i) => i !== categoryIndex);
+      newPlan[day].exercises = newPlan[day].exercises.filter((_, i) => i !== exerciseIndex);
       return newPlan;
     });
   };
@@ -373,50 +324,29 @@ function App() {
                 <div className="rest-day-message">🌴 Rest & Recovery</div>
               ) : (
                 <>
-                  {weeklyPlan[day].categories.map((category, catIndex) => (
-                    <div key={catIndex} className="planner-category">
-                      <div className="category-header-edit">
-                        <h3>{category.name}</h3>
+                  <div className="exercises-list">
+                    {weeklyPlan[day].exercises.map((exercise, exIndex) => (
+                      <div key={exIndex} className="exercise-edit">
+                        <div className="exercise-info">
+                          <span className="exercise-name-small">{exercise.name}</span>
+                          <span className="exercise-details">{exercise.sets} × {exercise.reps}</span>
+                        </div>
                         <button 
-                          className="remove-btn"
-                          onClick={() => removeCategory(day, catIndex)}
+                          className="remove-btn-small"
+                          onClick={() => removeExercise(day, exIndex)}
                         >
                           ✕
                         </button>
                       </div>
-                      
-                      {category.exercises.map((exercise, exIndex) => (
-                        <div key={exIndex} className="exercise-edit">
-                          <div className="exercise-info">
-                            <span className="exercise-name-small">{exercise.name}</span>
-                            <span className="exercise-details">{exercise.sets} × {exercise.reps}</span>
-                          </div>
-                          <button 
-                            className="remove-btn-small"
-                            onClick={() => removeExercise(day, catIndex, exIndex)}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                      
-                      <button 
-                        className="add-exercise-btn"
-                        onClick={() => addExercise(day, catIndex)}
-                      >
-                        + Add Exercise
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                   
-                  {weeklyPlan[day].categories.length === 0 && (
-                    <button 
-                      className="add-exercise-btn"
-                      onClick={() => addExercise(day, 0)}
-                    >
-                      + Add Exercise
-                    </button>
-                  )}
+                  <button 
+                    className="add-exercise-btn"
+                    onClick={() => addExercise(day)}
+                  >
+                    + Add Exercise
+                  </button>
                   
                   <div className="workout-notes-section">
                     <label className="notes-label">Quick Notes (weights, how you felt, etc.)</label>
@@ -489,31 +419,25 @@ function App() {
           </div>
 
           <div className="workout-container">
-            {todayPlan.categories.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="category-section">
-                <h2 className="category-title">{category.name}</h2>
+            {todayPlan.exercises.map((exercise, exerciseIndex) => (
+              <div key={exerciseIndex} className="exercise-card">
+                <div className="exercise-header">
+                  <h3 className="exercise-name">{exercise.name}</h3>
+                  <span className="exercise-reps">{exercise.sets} × {exercise.reps}</span>
+                </div>
                 
-                {category.exercises.map((exercise, exerciseIndex) => (
-                  <div key={exerciseIndex} className="exercise-card">
-                    <div className="exercise-header">
-                      <h3 className="exercise-name">{exercise.name}</h3>
-                      <span className="exercise-reps">{exercise.sets} × {exercise.reps}</span>
-                    </div>
-                    
-                    <div className="sets-container">
-                      {Array.from({ length: exercise.sets }, (_, setIndex) => (
-                        <label key={setIndex} className="set-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={completedSets[currentDay]?.[categoryIndex]?.[exerciseIndex]?.[setIndex] || false}
-                            onChange={() => toggleSet(categoryIndex, exerciseIndex, setIndex)}
-                          />
-                          <span className="checkbox-label">Set {setIndex + 1}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                <div className="sets-container">
+                  {Array.from({ length: exercise.sets }, (_, setIndex) => (
+                    <label key={setIndex} className="set-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={completedSets[currentDay]?.[exerciseIndex]?.[setIndex] || false}
+                        onChange={() => toggleSet(exerciseIndex, setIndex)}
+                      />
+                      <span className="checkbox-label">Set {setIndex + 1}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
