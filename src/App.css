@@ -233,6 +233,42 @@
   z-index: 1;
 }
 
+.exercise-notes {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.notes-label-small {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.exercise-notes-input {
+  width: 100%;
+  padding: 0.65rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+  background: #f9fafb;
+}
+
+.exercise-notes-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  background: white;
+}
+
+.exercise-notes-input::placeholder {
+  color: #9ca3af;
+}
+
 .footer {
   display: none; /* Hidden on mobile, use bottom nav instead */
 }

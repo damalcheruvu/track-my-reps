@@ -395,17 +395,6 @@ function App() {
                   >
                     + Add Exercise
                   </button>
-                  
-                  <div className="workout-notes-section">
-                    <label className="notes-label">Quick Notes (weights, how you felt, etc.)</label>
-                    <textarea
-                      className="workout-notes-input"
-                      placeholder="e.g., Bench Press 60kg × 8, felt strong today"
-                      value={workoutNotes[day] || ''}
-                      onChange={(e) => updateWorkoutNote(day, e.target.value)}
-                      rows={3}
-                    />
-                  </div>
                 </>
               )}
             </div>
@@ -486,23 +475,27 @@ function App() {
                     </label>
                   ))}
                 </div>
+                
+                <div className="exercise-notes">
+                  <label className="notes-label-small">💪 Notes (weight, reps, how it felt)</label>
+                  <textarea
+                    className="exercise-notes-input"
+                    placeholder="e.g., 60kg × 8, felt strong"
+                    value={workoutNotes[`${currentDay}-${exerciseIndex}`] || ''}
+                    onChange={(e) => updateWorkoutNote(`${currentDay}-${exerciseIndex}`, e.target.value)}
+                    rows={2}
+                  />
+                </div>
               </div>
             ))}
           </div>
 
-          {workoutNotes[currentDay] && (
-            <div className="previous-notes-display">
-              <h3>📝 Previous Notes</h3>
-              <p>{workoutNotes[currentDay]}</p>
-            </div>
-          )}
-
           <div className="footer">
             <button className="edit-plan-btn" onClick={() => setView('planner')}>
-              Edit Plan
+              📅 Weekly Plan
             </button>
             <button className="reset-button" onClick={resetAll}>
-              Reset Today
+              🔄 Reset Today
             </button>
           </div>
         </>
@@ -515,21 +508,14 @@ function App() {
           onClick={() => setView('tracker')}
         >
           <div className="nav-icon">💪</div>
-          <span>Workout</span>
-        </button>
-        <button 
-          className={`nav-item ${view === 'planner' ? 'active' : ''}`}
-          onClick={() => setView('planner')}
-        >
-          <div className="nav-icon">📅</div>
-          <span>Plan</span>
+          <span>Tracker</span>
         </button>
         <button 
           className="nav-item"
-          onClick={user ? signOut : signInWithGoogle}
+          onClick={resetAll}
         >
-          <div className="nav-icon">{user ? '👤' : '🔐'}</div>
-          <span>{user ? 'Profile' : 'Sign In'}</span>
+          <div className="nav-icon">🔄</div>
+          <span>Reset</span>
         </button>
       </nav>
     </div>
