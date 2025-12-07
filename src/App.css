@@ -537,7 +537,7 @@
   background: #dc2626;
 }
 
-.add-exercise-btn, .add-category-btn {
+.add-exercise-btn {
   background: #10b981;
   color: white;
   border: none;
@@ -551,38 +551,71 @@
   margin-top: 0.5rem;
 }
 
-.add-category-btn {
-  background: #3b82f6;
-}
-
 .add-exercise-btn:hover {
   background: #059669;
 }
 
-.add-category-btn:hover {
-  background: #2563eb;
+/* Workout Notes Section */
+.workout-notes-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
 }
 
-.copy-select {
+.notes-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+.workout-notes-input {
   width: 100%;
   padding: 0.75rem;
+  border: 2px solid #fbbf24;
   border-radius: 6px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
   font-size: 0.9rem;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: border-color 0.2s ease;
+  font-family: inherit;
+  resize: vertical;
+  background: white;
+  color: #78350f;
 }
 
-.copy-select:hover {
-  border-color: #d1d5db;
-}
-
-.copy-select:focus {
+.workout-notes-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.workout-notes-input::placeholder {
+  color: #d97706;
+  opacity: 0.6;
+}
+
+/* Previous Notes Display in Tracker */
+.previous-notes-display {
+  margin: 1.5rem 1rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+}
+
+.previous-notes-display h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+.previous-notes-display p {
+  font-size: 0.9rem;
+  color: #78350f;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 /* Loading & Auth Screens */

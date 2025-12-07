@@ -113,6 +113,13 @@ function App() {
     'completedSets'
   );
 
+  // Workout notes for tracking weights/details
+  const [workoutNotes, setWorkoutNotes] = useFirestoreSync(
+    user,
+    {},
+    'workoutNotes'
+  );
+
   // Initialize completedSets for current day if not exists
   useEffect(() => {
     const todayPlan = weeklyPlan[currentDay];
@@ -215,30 +222,6 @@ function App() {
     }));
   };
 
-  const addCategory = (day) => {
-    const categoryName = prompt('Enter category name (e.g., Chest, Back, Legs):');
-    if (!categoryName) return;
-    
-    setWeeklyPlan(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        categories: [...prev[day].categories, { name: categoryName, exercises: [] }]
-      }
-    }));
-  };
-
-  const removeCategory = (day, categoryIndex) => {
-    if (!window.confirm('Remove this category?')) return;
-    setWeeklyPlan(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        categories: prev[day].categories.filter((_, i) => i !== categoryIndex)
-      }
-    }));
-  };
-
   const addExercise = (day, categoryIndex) => {
     const name = prompt('Exercise name:');
     if (!name) return;
@@ -263,11 +246,10 @@ function App() {
     });
   };
 
-  const copyDayPlan = (fromDay, toDay) => {
-    if (!window.confirm(`Copy ${fromDay}'s plan to ${toDay}?`)) return;
-    setWeeklyPlan(prev => ({
+  const updateWorkoutNote = (day, note) => {
+    setWorkoutNotes(prev => ({
       ...prev,
-      [toDay]: JSON.parse(JSON.stringify(prev[fromDay]))
+      [day]: note
     }));
   };
 
@@ -413,29 +395,16 @@ function App() {
                     </div>
                   ))}
                   
-                  <button 
-                    className="add-category-btn"
-                    onClick={() => addCategory(day)}
-                  >
-                    + Add Category
-                  </button>
-
-                  {DAYS.some(d => d !== day && !weeklyPlan[d].isRest) && (
-                    <select 
-                      className="copy-select"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          copyDayPlan(e.target.value, day);
-                          e.target.value = '';
-                        }
-                      }}
-                    >
-                      <option value="">Copy from another day...</option>
-                      {DAYS.filter(d => d !== day && !weeklyPlan[d].isRest).map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  )}
+                  <div className="workout-notes-section">
+                    <label className="notes-label">Quick Notes (weights, how you felt, etc.)</label>
+                    <textarea
+                      className="workout-notes-input"
+                      placeholder="e.g., Bench Press 60kg × 8, felt strong today"
+                      value={workoutNotes[day] || ''}
+                      onChange={(e) => updateWorkoutNote(day, e.target.value)}
+                      rows={3}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -525,6 +494,13 @@ function App() {
               </div>
             ))}
           </div>
+
+          {workoutNotes[currentDay] && (
+            <div className="previous-notes-display">
+              <h3>📝 Previous Notes</h3>
+              <p>{workoutNotes[currentDay]}</p>
+            </div>
+          )}
 
           <div className="footer">
             <button className="edit-plan-btn" onClick={() => setView('planner')}>
