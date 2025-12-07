@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { useAuth, useFirestoreSync } from './useFirebase'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { db } from './firebase'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -63,11 +65,52 @@ function App() {
     return DAYS[today === 0 ? 6 : today - 1]; // Convert Sunday=0 to index 6
   });
 
-  // Sync completed sets with Firebase - using real-time sync like weeklyPlan
-  const [completedSets, setCompletedSets] = useFirestoreSync(user, {}, 'completedSets');
+  // Sync completed sets with Firebase - SIMPLE DIRECT SAVE/LOAD
+  const [completedSets, setCompletedSets] = useState({});
+  const [workoutNotes, setWorkoutNotes] = useState({});
+  const hasSynced = useRef({ completedSets: false, workoutNotes: false });
+  const notesTimeoutRef = useRef(null); // For debouncing notes
 
-  // Workout notes - using real-time sync like weeklyPlan
-  const [workoutNotes, setWorkoutNotes] = useFirestoreSync(user, {}, 'workoutNotes');
+  // Load data from Firebase on mount or user change
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) {
+        setCompletedSets({});
+        setWorkoutNotes({});
+        hasSynced.current = { completedSets: false, workoutNotes: false };
+        return;
+      }
+
+      console.log('🔄 Loading workout data from Firebase...');
+      try {
+        // Load completed sets
+        const setsDoc = await getDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'));
+        if (setsDoc.exists()) {
+          console.log('✅ Loaded completedSets:', setsDoc.data());
+          setCompletedSets(setsDoc.data());
+        } else {
+          console.log('ℹ️ No completedSets found in Firebase');
+        }
+        
+        // Load workout notes
+        const notesDoc = await getDoc(doc(db, 'users', user.uid, 'workoutData', 'workoutNotes'));
+        if (notesDoc.exists()) {
+          console.log('✅ Loaded workoutNotes:', notesDoc.data());
+          setWorkoutNotes(notesDoc.data());
+        } else {
+          console.log('ℹ️ No workoutNotes found in Firebase');
+        }
+        
+        hasSynced.current = { completedSets: true, workoutNotes: true };
+      } catch (error) {
+        console.error('❌ Error loading workout data:', error);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Workout notes - no longer using sync hook
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -179,6 +222,38 @@ function App() {
     initializedDays.current.add(currentDay);
   }, [currentDay, weeklyPlan]);
 
+  // Simple direct save to Firebase
+  const saveCompletedSets = async (newSets) => {
+    if (!user) return;
+    try {
+      console.log('💾 Saving completedSets to Firebase...');
+      await setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), newSets);
+      console.log('✅ Saved completedSets successfully');
+    } catch (error) {
+      console.error('❌ Error saving completedSets:', error);
+    }
+  };
+
+  const saveWorkoutNotes = async (newNotes) => {
+    if (!user) return;
+    
+    // Clear previous timeout
+    if (notesTimeoutRef.current) {
+      clearTimeout(notesTimeoutRef.current);
+    }
+    
+    // Debounce: save 1 second after user stops typing
+    notesTimeoutRef.current = setTimeout(async () => {
+      try {
+        console.log('💾 Saving workoutNotes to Firebase...');
+        await setDoc(doc(db, 'users', user.uid, 'workoutData', 'workoutNotes'), newNotes);
+        console.log('✅ Saved workoutNotes successfully');
+      } catch (error) {
+        console.error('❌ Error saving workoutNotes:', error);
+      }
+    }, 1000);
+  };
+
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
@@ -196,7 +271,9 @@ function App() {
           }
         });
         initialState[key] = true;
-        return { ...prev, [currentDay]: initialState };
+        const newState = { ...prev, [currentDay]: initialState };
+        saveCompletedSets(newState); // Save immediately
+        return newState;
       }
       
       // Check if previous sets are completed (sequential checking)
@@ -208,13 +285,15 @@ function App() {
         }
       }
       
-      return {
+      const newState = {
         ...prev,
         [currentDay]: {
           ...dayState,
           [key]: !dayState[key]
         }
       };
+      saveCompletedSets(newState); // Save immediately
+      return newState;
     });
   };
 
@@ -231,7 +310,9 @@ function App() {
         }
       });
       
-      setCompletedSets(prev => ({ ...prev, [currentDay]: resetState }));
+      const newState = { ...completedSets, [currentDay]: resetState };
+      setCompletedSets(newState);
+      saveCompletedSets(newState); // Save immediately
     }
   };
 
@@ -299,10 +380,12 @@ function App() {
   };
 
   const updateWorkoutNote = (note) => {
-    setWorkoutNotes(prev => ({
-      ...prev,
+    const newNotes = {
+      ...workoutNotes,
       [currentDay]: note
-    }));
+    };
+    setWorkoutNotes(newNotes);
+    saveWorkoutNotes(newNotes); // Save immediately
   };
 
   const progress = getTotalProgress();
