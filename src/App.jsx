@@ -332,6 +332,45 @@ function App() {
     });
   };
 
+  const updateExerciseName = (day, exerciseIndex, newName) => {
+    setWeeklyPlan(prev => {
+      const newPlan = { ...prev };
+      newPlan[day] = {
+        ...newPlan[day],
+        exercises: newPlan[day].exercises.map((ex, i) => 
+          i === exerciseIndex ? { ...ex, name: newName } : ex
+        )
+      };
+      return newPlan;
+    });
+  };
+
+  const updateExerciseSets = (day, exerciseIndex, newSets) => {
+    setWeeklyPlan(prev => {
+      const newPlan = { ...prev };
+      newPlan[day] = {
+        ...newPlan[day],
+        exercises: newPlan[day].exercises.map((ex, i) => 
+          i === exerciseIndex ? { ...ex, sets: newSets } : ex
+        )
+      };
+      return newPlan;
+    });
+  };
+
+  const updateExerciseReps = (day, exerciseIndex, newReps) => {
+    setWeeklyPlan(prev => {
+      const newPlan = { ...prev };
+      newPlan[day] = {
+        ...newPlan[day],
+        exercises: newPlan[day].exercises.map((ex, i) => 
+          i === exerciseIndex ? { ...ex, reps: newReps } : ex
+        )
+      };
+      return newPlan;
+    });
+  };
+
   const progress = getTotalProgress();
   const todayPlan = weeklyPlan[currentDay];
 
@@ -403,22 +442,6 @@ function App() {
             <button className="nav-button" onClick={() => setView('tracker')}>
               Back to Tracker
             </button>
-            <button 
-              className="nav-button" 
-              style={{backgroundColor: '#dc3545', fontSize: '0.85rem', padding: '0.5rem 1rem'}}
-              onClick={() => {
-                if (window.confirm('⚠️ Reset to default workout plan? This will delete your current plan and progress!')) {
-                  // Reset local state (auto-save will handle Supabase)
-                  setWeeklyPlan(DEFAULT_WEEKLY_PLAN);
-                  setCompletedSets({});
-                  
-                  alert('✅ Reset complete! Your new workout plan is loaded.');
-                  setView('tracker');
-                }
-              }}
-            >
-              🔄 Reset
-            </button>
             <div className="user-info">
               <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
               <button className="sign-out-btn" onClick={signOut}>Sign Out</button>
@@ -451,8 +474,31 @@ function App() {
                     {(weeklyPlan[day].exercises || []).map((exercise, exIndex) => (
                       <div key={exIndex} className="exercise-edit">
                         <div className="exercise-info">
-                          <span className="exercise-name-small">{exercise.name}</span>
-                          <span className="exercise-details">{exercise.sets} × {exercise.reps}</span>
+                          <input
+                            type="text"
+                            className="exercise-name-input"
+                            value={exercise.name}
+                            onChange={(e) => updateExerciseName(day, exIndex, e.target.value)}
+                            placeholder="Exercise name"
+                          />
+                          <div className="exercise-sets-reps">
+                            <input
+                              type="number"
+                              className="sets-input"
+                              value={exercise.sets}
+                              onChange={(e) => updateExerciseSets(day, exIndex, parseInt(e.target.value) || 1)}
+                              min="1"
+                              max="10"
+                            />
+                            <span>×</span>
+                            <input
+                              type="text"
+                              className="reps-input"
+                              value={exercise.reps}
+                              onChange={(e) => updateExerciseReps(day, exIndex, e.target.value)}
+                              placeholder="reps"
+                            />
+                          </div>
                         </div>
                         <button 
                           className="remove-btn-small"
