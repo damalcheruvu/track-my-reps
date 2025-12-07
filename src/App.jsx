@@ -48,6 +48,8 @@ function App() {
   const [view, setView] = useState('tracker'); // 'tracker' or 'planner'
   const hasMigrated = useRef(false);
   const initializedDays = useRef(new Set());
+  const [localNotes, setLocalNotes] = useState('');
+  const [notesSaved, setNotesSaved] = useState(true);
   
   // Sync weekly plan with Firebase (requires login)
   const [weeklyPlan, setWeeklyPlan] = useFirestoreSync(
@@ -74,6 +76,12 @@ function App() {
     {},
     'workoutNotes'
   );
+
+  // Load local notes when day changes
+  useEffect(() => {
+    setLocalNotes(workoutNotes[currentDay] || '');
+    setNotesSaved(true);
+  }, [currentDay, workoutNotes]);
 
   // Migrate old category-based data to new flat structure
   useEffect(() => {
@@ -122,18 +130,21 @@ function App() {
     const todayPlan = weeklyPlan[currentDay];
     if (!todayPlan || todayPlan.isRest || !todayPlan.exercises) return;
     
-    if (!completedSets[currentDay]) {
-      console.log('Initializing completedSets for', currentDay);
-      const newState = todayPlan.exercises.map(exercise => 
-        Array(exercise.sets).fill(false)
-      );
-      setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
-      initializedDays.current.add(currentDay);
-    } else {
+    // Only initialize if completely missing, don't check completedSets value
+    setCompletedSets(prev => {
+      if (!prev[currentDay]) {
+        console.log('Initializing completedSets for', currentDay);
+        const newState = todayPlan.exercises.map(exercise => 
+          Array(exercise.sets).fill(false)
+        );
+        initializedDays.current.add(currentDay);
+        return { ...prev, [currentDay]: newState };
+      }
       // Already has data, just mark as initialized
       initializedDays.current.add(currentDay);
-    }
-  }, [currentDay, weeklyPlan, completedSets, setCompletedSets]);
+      return prev;
+    });
+  }, [currentDay, weeklyPlan, setCompletedSets]);
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
@@ -152,6 +163,15 @@ function App() {
           )
         );
         return { ...prev, [currentDay]: newState };
+      }
+      
+      // Check if previous sets are completed (sequential checking)
+      if (setIndex > 0) {
+        const previousCompleted = dayState[exerciseIndex]?.[setIndex - 1];
+        if (!previousCompleted) {
+          // Don't allow clicking this set if previous set not done
+          return prev;
+        }
       }
       
       const newDayState = dayState.map((exercise, ei) =>
@@ -228,11 +248,17 @@ function App() {
     });
   };
 
-  const updateWorkoutNote = (day, note) => {
+  const updateWorkoutNote = (note) => {
+    setLocalNotes(note);
+    setNotesSaved(false);
+  };
+
+  const saveNotes = () => {
     setWorkoutNotes(prev => ({
       ...prev,
-      [day]: note
+      [currentDay]: localNotes
     }));
+    setNotesSaved(true);
   };
 
   const progress = getTotalProgress();
@@ -437,19 +463,26 @@ function App() {
                     </label>
                   ))}
                 </div>
-                
-                <div className="exercise-notes">
-                  <label className="notes-label-small">💪 Notes (weight, reps, how it felt)</label>
-                  <textarea
-                    className="exercise-notes-input"
-                    placeholder="e.g., 60kg × 8, felt strong"
-                    value={workoutNotes[`${currentDay}-${exerciseIndex}`] || ''}
-                    onChange={(e) => updateWorkoutNote(`${currentDay}-${exerciseIndex}`, e.target.value)}
-                    rows={2}
-                  />
-                </div>
               </div>
             ))}
+          </div>
+
+          <div className="workout-notes-section">
+            <label className="notes-label">📝 Workout Notes</label>
+            <textarea
+              className="workout-notes-input"
+              placeholder="Track your weights, reps, and how you felt today..."
+              value={localNotes}
+              onChange={(e) => updateWorkoutNote(e.target.value)}
+              rows={4}
+            />
+            <button 
+              className={`save-notes-btn ${notesSaved ? 'saved' : ''}`}
+              onClick={saveNotes}
+              disabled={notesSaved}
+            >
+              {notesSaved ? '✓ Saved' : '💾 Save Notes'}
+            </button>
           </div>
 
           <div className="footer">
