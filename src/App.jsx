@@ -222,7 +222,10 @@ function App() {
 
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
-      newPlan[day].exercises.push({ name, sets, reps });
+      newPlan[day] = {
+        ...newPlan[day],
+        exercises: [...(newPlan[day].exercises || []), { name, sets, reps }]
+      };
       return newPlan;
     });
   };
