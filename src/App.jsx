@@ -2,6 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { useAuth } from './useSupabase'
 import { useSupabaseSync } from './useSupabase'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -63,6 +79,65 @@ const DEFAULT_WEEKLY_PLAN = {
   },
   Sunday: { isRest: true, exercises: [] },
 };
+
+// Sortable Exercise Component
+function SortableExercise({ exercise, index, day, updateExerciseName, updateExerciseSets, updateExerciseReps, removeExercise }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: index });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="exercise-edit">
+      <div className="drag-handle" {...attributes} {...listeners}>
+        ⋮⋮
+      </div>
+      <div className="exercise-info">
+        <input
+          type="text"
+          className="exercise-name-input"
+          value={exercise.name}
+          onChange={(e) => updateExerciseName(day, index, e.target.value)}
+          placeholder="Exercise name"
+        />
+        <div className="exercise-sets-reps">
+          <input
+            type="number"
+            className="sets-input"
+            value={exercise.sets}
+            onChange={(e) => updateExerciseSets(day, index, parseInt(e.target.value) || 1)}
+            min="1"
+            max="10"
+          />
+          <span>×</span>
+          <input
+            type="text"
+            className="reps-input"
+            value={exercise.reps}
+            onChange={(e) => updateExerciseReps(day, index, e.target.value)}
+            placeholder="reps"
+          />
+        </div>
+      </div>
+      <button 
+        className="remove-btn-small"
+        onClick={() => removeExercise(day, index)}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 function App() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -371,6 +446,41 @@ function App() {
     });
   };
 
+  const handleDragEnd = (day, event) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setWeeklyPlan(prev => {
+      const exercises = prev[day].exercises || [];
+      const oldIndex = exercises.findIndex((_, i) => i === active.id);
+      const newIndex = exercises.findIndex((_, i) => i === over.id);
+      
+      const newExercises = arrayMove(exercises, oldIndex, newIndex);
+      
+      return {
+        ...prev,
+        [day]: {
+          ...prev[day],
+          exercises: newExercises
+        }
+      };
+    });
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const progress = getTotalProgress();
   const todayPlan = weeklyPlan[currentDay];
 
@@ -470,45 +580,31 @@ function App() {
                 <div className="rest-day-message">🌴 Rest & Recovery</div>
               ) : (
                 <>
-                  <div className="exercises-list">
-                    {(weeklyPlan[day].exercises || []).map((exercise, exIndex) => (
-                      <div key={exIndex} className="exercise-edit">
-                        <div className="exercise-info">
-                          <input
-                            type="text"
-                            className="exercise-name-input"
-                            value={exercise.name}
-                            onChange={(e) => updateExerciseName(day, exIndex, e.target.value)}
-                            placeholder="Exercise name"
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(event) => handleDragEnd(day, event)}
+                  >
+                    <SortableContext
+                      items={(weeklyPlan[day].exercises || []).map((_, i) => i)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="exercises-list">
+                        {(weeklyPlan[day].exercises || []).map((exercise, exIndex) => (
+                          <SortableExercise
+                            key={exIndex}
+                            exercise={exercise}
+                            index={exIndex}
+                            day={day}
+                            updateExerciseName={updateExerciseName}
+                            updateExerciseSets={updateExerciseSets}
+                            updateExerciseReps={updateExerciseReps}
+                            removeExercise={removeExercise}
                           />
-                          <div className="exercise-sets-reps">
-                            <input
-                              type="number"
-                              className="sets-input"
-                              value={exercise.sets}
-                              onChange={(e) => updateExerciseSets(day, exIndex, parseInt(e.target.value) || 1)}
-                              min="1"
-                              max="10"
-                            />
-                            <span>×</span>
-                            <input
-                              type="text"
-                              className="reps-input"
-                              value={exercise.reps}
-                              onChange={(e) => updateExerciseReps(day, exIndex, e.target.value)}
-                              placeholder="reps"
-                            />
-                          </div>
-                        </div>
-                        <button 
-                          className="remove-btn-small"
-                          onClick={() => removeExercise(day, exIndex)}
-                        >
-                          ✕
-                        </button>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </SortableContext>
+                  </DndContext>
                   
                   <button 
                     className="add-exercise-btn"
