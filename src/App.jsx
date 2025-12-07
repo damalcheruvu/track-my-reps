@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 import { useAuth, useFirestoreSync } from './useFirebase'
 
@@ -46,6 +46,7 @@ const DEFAULT_WEEKLY_PLAN = {
 function App() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
   const [view, setView] = useState('tracker'); // 'tracker' or 'planner'
+  const hasMigrated = useRef(false);
   
   // Local state for when not signed in
   const [localWeeklyPlan] = useState(() => {
@@ -102,10 +103,21 @@ function App() {
 
   // Migrate old category-based data to new flat structure
   useEffect(() => {
+    if (!weeklyPlan || hasMigrated.current) return;
+    
     let needsMigration = false;
-    const migratedPlan = { ...weeklyPlan };
+    const migratedPlan = {};
     
     DAYS.forEach(day => {
+      if (!weeklyPlan[day]) {
+        migratedPlan[day] = { isRest: true, exercises: [] };
+        needsMigration = true;
+        return;
+      }
+      
+      // Create a copy of the day's plan
+      migratedPlan[day] = { ...weeklyPlan[day] };
+      
       // Migrate from categories to exercises
       if (migratedPlan[day].categories && !migratedPlan[day].exercises) {
         needsMigration = true;
@@ -120,12 +132,18 @@ function App() {
     });
     
     if (needsMigration) {
+      console.log('Migrating data structure from categories to exercises');
+      hasMigrated.current = true;
       setWeeklyPlan(migratedPlan);
+    } else {
+      hasMigrated.current = true;
     }
-  }, []);
+  }, [weeklyPlan, setWeeklyPlan]);
 
   // Initialize completedSets for current day if not exists
   useEffect(() => {
+    if (!hasMigrated.current) return; // Wait for migration to complete
+    
     const todayPlan = weeklyPlan[currentDay];
     if (!todayPlan || todayPlan.isRest || !todayPlan.exercises) return;
     
@@ -135,7 +153,7 @@ function App() {
       );
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
     }
-  }, [currentDay, weeklyPlan, completedSets]);
+  }, [currentDay, weeklyPlan, completedSets, setCompletedSets]);
 
   // Save to localStorage as backup when not signed in
   useEffect(() => {
@@ -233,7 +251,10 @@ function App() {
   const removeExercise = (day, exerciseIndex) => {
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
-      newPlan[day].exercises = newPlan[day].exercises.filter((_, i) => i !== exerciseIndex);
+      newPlan[day] = {
+        ...newPlan[day],
+        exercises: (newPlan[day].exercises || []).filter((_, i) => i !== exerciseIndex)
+      };
       return newPlan;
     });
   };
