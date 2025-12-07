@@ -433,6 +433,28 @@ function App() {
         <header className="header">
           <h1>📅 Weekly Planner</h1>
           <div className="header-buttons">
+            <button 
+              className="nav-button" 
+              style={{backgroundColor: '#dc3545', marginRight: '10px'}}
+              onClick={async () => {
+                if (window.confirm('⚠️ Reset to default workout plan? This will delete your current plan and progress!')) {
+                  try {
+                    // Delete from Firebase
+                    await setDoc(doc(db, 'users', user.uid, 'workoutData', 'weeklyPlan'), DEFAULT_WEEKLY_PLAN);
+                    await setDoc(doc(db, 'users', user.uid, 'workoutData', 'completedSets'), {});
+                    // Reset local state
+                    setWeeklyPlan(DEFAULT_WEEKLY_PLAN);
+                    setCompletedSets({});
+                    alert('✅ Reset complete! Your new workout plan is loaded.');
+                  } catch (error) {
+                    console.error('Error resetting:', error);
+                    alert('Error resetting. Try again.');
+                  }
+                }
+              }}
+            >
+              🔄 Reset to Default Plan
+            </button>
             <button className="nav-button" onClick={() => setView('tracker')}>
               Back to Tracker
             </button>
