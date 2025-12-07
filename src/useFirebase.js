@@ -142,6 +142,7 @@ export const useFirestoreSync = (user, localData, dataKey) => {
 export const useNotesSync = (user, dataKey) => {
   const [notes, setNotes] = useState({});
   const hasLoaded = useRef(false);
+  const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
   // Load notes once on mount or when user changes
@@ -164,12 +165,16 @@ export const useNotesSync = (user, dataKey) => {
 
     const loadNotes = async () => {
       try {
+        console.log('Loading notes from Firebase...');
         const userDocRef = doc(db, 'users', user.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const cloudNotes = docSnap.data()[dataKey];
           if (cloudNotes) {
+            console.log('Notes loaded:', cloudNotes);
             setNotes(cloudNotes);
+          } else {
+            console.log('No notes in Firebase');
           }
         }
         hasLoaded.current = true;
@@ -182,21 +187,30 @@ export const useNotesSync = (user, dataKey) => {
     loadNotes();
   }, [user, dataKey]);
 
-  // Save notes immediately when they change
+  // Save notes with minimal debounce
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
-    const saveNotes = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log('Saving notes to Firebase:', notes);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
-        console.log('Notes saved');
+        console.log('✓ Notes saved to Firebase successfully');
       } catch (error) {
-        console.error('Error saving notes:', error);
+        console.error('✗ Error saving notes to Firebase:', error);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
     };
-
-    saveNotes();
   }, [user, notes, dataKey]);
 
   return [notes, setNotes];
@@ -206,6 +220,7 @@ export const useNotesSync = (user, dataKey) => {
 export const useCompletedSetsSync = (user, dataKey) => {
   const [sets, setSets] = useState({});
   const hasLoaded = useRef(false);
+  const saveTimeoutRef = useRef(null);
   const lastUserRef = useRef(null);
 
   // Load sets once on mount or when user changes
@@ -228,12 +243,16 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     const loadSets = async () => {
       try {
+        console.log('Loading sets from Firebase...');
         const userDocRef = doc(db, 'users', user.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const cloudSets = docSnap.data()[dataKey];
           if (cloudSets) {
+            console.log('Sets loaded:', cloudSets);
             setSets(cloudSets);
+          } else {
+            console.log('No sets in Firebase');
           }
         }
         hasLoaded.current = true;
@@ -246,21 +265,30 @@ export const useCompletedSetsSync = (user, dataKey) => {
     loadSets();
   }, [user, dataKey]);
 
-  // Save sets immediately when they change
+  // Save sets with minimal debounce
   useEffect(() => {
     if (!user || !hasLoaded.current) return;
 
-    const saveSets = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
       try {
+        console.log('Saving sets to Firebase:', sets);
         const userDocRef = doc(db, 'users', user.uid);
         await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
-        console.log('Sets saved');
+        console.log('✓ Sets saved to Firebase successfully');
       } catch (error) {
-        console.error('Error saving sets:', error);
+        console.error('✗ Error saving sets to Firebase:', error);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
     };
-
-    saveSets();
   }, [user, sets, dataKey]);
 
   return [sets, setSets];
