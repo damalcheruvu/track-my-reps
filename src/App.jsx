@@ -106,11 +106,16 @@ function App() {
     const migratedPlan = { ...weeklyPlan };
     
     DAYS.forEach(day => {
+      // Migrate from categories to exercises
       if (migratedPlan[day].categories && !migratedPlan[day].exercises) {
         needsMigration = true;
-        // Flatten all exercises from all categories
-        migratedPlan[day].exercises = migratedPlan[day].categories.flatMap(cat => cat.exercises);
+        migratedPlan[day].exercises = migratedPlan[day].categories.flatMap(cat => cat.exercises || []);
         delete migratedPlan[day].categories;
+      }
+      // Ensure exercises array exists
+      if (!migratedPlan[day].exercises) {
+        needsMigration = true;
+        migratedPlan[day].exercises = [];
       }
     });
     
@@ -122,7 +127,7 @@ function App() {
   // Initialize completedSets for current day if not exists
   useEffect(() => {
     const todayPlan = weeklyPlan[currentDay];
-    if (!todayPlan || todayPlan.isRest) return;
+    if (!todayPlan || todayPlan.isRest || !todayPlan.exercises) return;
     
     if (!completedSets[currentDay]) {
       const newState = todayPlan.exercises.map(exercise => 
@@ -150,6 +155,7 @@ function App() {
       // Ensure dayState is properly initialized
       if (dayState.length === 0) {
         const todayPlan = weeklyPlan[currentDay];
+        if (!todayPlan.exercises) return prev;
         const initialState = todayPlan.exercises.map(exercise => 
           Array(exercise.sets).fill(false)
         );
@@ -173,6 +179,7 @@ function App() {
   const resetAll = () => {
     if (window.confirm('Reset all checkboxes for today?')) {
       const todayPlan = weeklyPlan[currentDay];
+      if (!todayPlan.exercises) return;
       const newState = todayPlan.exercises.map(exercise => 
         Array(exercise.sets).fill(false)
       );
@@ -342,7 +349,7 @@ function App() {
               ) : (
                 <>
                   <div className="exercises-list">
-                    {weeklyPlan[day].exercises.map((exercise, exIndex) => (
+                    {(weeklyPlan[day].exercises || []).map((exercise, exIndex) => (
                       <div key={exIndex} className="exercise-edit">
                         <div className="exercise-info">
                           <span className="exercise-name-small">{exercise.name}</span>
@@ -436,7 +443,7 @@ function App() {
           </div>
 
           <div className="workout-container">
-            {todayPlan.exercises.map((exercise, exerciseIndex) => (
+            {(todayPlan.exercises || []).map((exercise, exerciseIndex) => (
               <div key={exerciseIndex} className="exercise-card">
                 <div className="exercise-header">
                   <h3 className="exercise-name">{exercise.name}</h3>
