@@ -64,10 +64,10 @@ function App() {
   });
 
   // Sync completed sets with Firebase - using real-time sync like weeklyPlan
-  const [completedSets, setCompletedSets] = useFirestoreSync(user, 'completedSets', {});
+  const [completedSets, setCompletedSets] = useFirestoreSync(user, {}, 'completedSets');
 
   // Workout notes - using real-time sync like weeklyPlan
-  const [workoutNotes, setWorkoutNotes] = useFirestoreSync(user, 'workoutNotes', {});
+  const [workoutNotes, setWorkoutNotes] = useFirestoreSync(user, {}, 'workoutNotes');
 
   // Keep ref in sync with state
   useEffect(() => {
