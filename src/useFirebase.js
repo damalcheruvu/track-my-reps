@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { 
   signInWithPopup, 
   signOut as firebaseSignOut,
@@ -146,7 +146,7 @@ export const useNotesSync = (user, dataKey) => {
   const lastUserRef = useRef(null);
 
   // Function to load notes from Firebase
-  const loadNotesFromFirebase = async () => {
+  const loadNotesFromFirebase = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -157,6 +157,8 @@ export const useNotesSync = (user, dataKey) => {
         if (cloudNotes) {
           console.log('Loaded notes from Firebase:', cloudNotes);
           setNotes(cloudNotes);
+        } else {
+          console.log('No notes found in Firebase');
         }
       }
       hasLoaded.current = true;
@@ -164,7 +166,7 @@ export const useNotesSync = (user, dataKey) => {
       console.error('Error loading notes:', error);
       hasLoaded.current = true;
     }
-  };
+  }, [user, dataKey]);
 
   // Load notes once on mount or when user changes
   useEffect(() => {
@@ -199,7 +201,7 @@ export const useNotesSync = (user, dataKey) => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, dataKey]);
+  }, [user, loadNotesFromFirebase]);
 
   // Save notes when they change (debounced)
   useEffect(() => {
@@ -238,7 +240,7 @@ export const useCompletedSetsSync = (user, dataKey) => {
   const lastUserRef = useRef(null);
 
   // Function to load sets from Firebase
-  const loadSetsFromFirebase = async () => {
+  const loadSetsFromFirebase = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -249,6 +251,8 @@ export const useCompletedSetsSync = (user, dataKey) => {
         if (cloudSets) {
           console.log('Loaded sets from Firebase:', cloudSets);
           setSets(cloudSets);
+        } else {
+          console.log('No sets found in Firebase');
         }
       }
       hasLoaded.current = true;
@@ -256,7 +260,7 @@ export const useCompletedSetsSync = (user, dataKey) => {
       console.error('Error loading sets:', error);
       hasLoaded.current = true;
     }
-  };
+  }, [user, dataKey]);
 
   // Load once on mount or when user changes
   useEffect(() => {
@@ -291,7 +295,7 @@ export const useCompletedSetsSync = (user, dataKey) => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user, dataKey]);
+  }, [user, loadSetsFromFirebase]);
 
   // Save when they change (debounced)
   useEffect(() => {
