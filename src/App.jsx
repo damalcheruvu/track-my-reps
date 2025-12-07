@@ -400,9 +400,12 @@ function App() {
         <header className="header">
           <h1>📅 Weekly Planner</h1>
           <div className="header-buttons">
+            <button className="nav-button" onClick={() => setView('tracker')}>
+              Back to Tracker
+            </button>
             <button 
               className="nav-button" 
-              style={{backgroundColor: '#dc3545', marginRight: '10px'}}
+              style={{backgroundColor: '#dc3545', fontSize: '0.85rem', padding: '0.5rem 1rem'}}
               onClick={() => {
                 if (window.confirm('⚠️ Reset to default workout plan? This will delete your current plan and progress!')) {
                   // Reset local state (auto-save will handle Supabase)
@@ -414,10 +417,7 @@ function App() {
                 }
               }}
             >
-              🔄 Reset to Default Plan
-            </button>
-            <button className="nav-button" onClick={() => setView('tracker')}>
-              Back to Tracker
+              🔄 Reset
             </button>
             <div className="user-info">
               <img src={user.photoURL} alt={user.displayName} className="user-avatar" />
