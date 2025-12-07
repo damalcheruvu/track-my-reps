@@ -186,7 +186,7 @@ export const useNotesSync = (user, dataKey) => {
     if (hasLoaded.current) return;
 
     loadNotesFromFirebase();
-  }, [user, dataKey]);
+  }, [user, loadNotesFromFirebase]);
 
   // Reload when page becomes visible (tab switching)
   useEffect(() => {
@@ -220,13 +220,34 @@ export const useNotesSync = (user, dataKey) => {
       } catch (error) {
         console.error('Error saving notes:', error);
       }
-    }, 1000);
+    }, 500);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
+  }, [user, notes, dataKey]);
+
+  // Save immediately before page unload
+  useEffect(() => {
+    if (!user || !hasLoaded.current) return;
+
+    const handleBeforeUnload = async () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dataKey]: notes }, { merge: true });
+        console.log('Notes saved on unload');
+      } catch (error) {
+        console.error('Error saving notes on unload:', error);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [user, notes, dataKey]);
 
   return [notes, setNotes];
@@ -280,7 +301,7 @@ export const useCompletedSetsSync = (user, dataKey) => {
     if (hasLoaded.current) return;
 
     loadSetsFromFirebase();
-  }, [user, dataKey]);
+  }, [user, loadSetsFromFirebase]);
 
   // Reload when page becomes visible (tab switching)
   useEffect(() => {
@@ -314,13 +335,34 @@ export const useCompletedSetsSync = (user, dataKey) => {
       } catch (error) {
         console.error('Error saving sets:', error);
       }
-    }, 500); // Faster save for sets
+    }, 500);
 
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
+  }, [user, sets, dataKey]);
+
+  // Save immediately before page unload
+  useEffect(() => {
+    if (!user || !hasLoaded.current) return;
+
+    const handleBeforeUnload = async () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { [dataKey]: sets }, { merge: true });
+        console.log('Sets saved on unload');
+      } catch (error) {
+        console.error('Error saving sets on unload:', error);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [user, sets, dataKey]);
 
   return [sets, setSets];
