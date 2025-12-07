@@ -127,7 +127,33 @@ function App() {
     } else {
       hasMigrated.current = true;
     }
-  }, [weeklyPlan, setWeeklyPlan]);
+    
+    // Also migrate completedSets from nested arrays to flat structure
+    const migratedSets = { ...completedSets };
+    let setsNeedMigration = false;
+    
+    DAYS.forEach(day => {
+      const dayState = migratedSets[day];
+      // Check if it's old nested array format
+      if (Array.isArray(dayState)) {
+        setsNeedMigration = true;
+        const flatState = {};
+        dayState.forEach((exerciseSets, exerciseIndex) => {
+          if (Array.isArray(exerciseSets)) {
+            exerciseSets.forEach((isCompleted, setIndex) => {
+              flatState[`${exerciseIndex}-${setIndex}`] = isCompleted;
+            });
+          }
+        });
+        migratedSets[day] = flatState;
+      }
+    });
+    
+    if (setsNeedMigration) {
+      console.log('Migrating completedSets from nested arrays to flat structure');
+      setCompletedSets(migratedSets);
+    }
+  }, [weeklyPlan, setWeeklyPlan, completedSets]);
 
   // Initialize completedSets for current day if not exists
   useEffect(() => {
@@ -140,9 +166,13 @@ function App() {
     // Use ref to check current value, avoiding dependency on completedSets
     if (!completedSetsRef.current[currentDay]) {
       console.log('Initializing completedSets for', currentDay);
-      const newState = todayPlan.exercises.map(exercise => 
-        Array(exercise.sets).fill(false)
-      );
+      // Convert to flat structure: { "0-0": false, "0-1": false, "1-0": false, ... }
+      const newState = {};
+      todayPlan.exercises.forEach((exercise, exerciseIndex) => {
+        for (let setIndex = 0; setIndex < exercise.sets; setIndex++) {
+          newState[`${exerciseIndex}-${setIndex}`] = false;
+        }
+      });
       setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
     }
     
@@ -152,38 +182,39 @@ function App() {
 
   const toggleSet = (exerciseIndex, setIndex) => {
     setCompletedSets(prev => {
-      const dayState = prev[currentDay] || [];
+      const dayState = prev[currentDay] || {};
+      const key = `${exerciseIndex}-${setIndex}`;
       
       // Ensure dayState is properly initialized
-      if (dayState.length === 0) {
+      if (Object.keys(dayState).length === 0) {
         const todayPlan = weeklyPlan[currentDay];
         if (!todayPlan.exercises) return prev;
-        const initialState = todayPlan.exercises.map(exercise => 
-          Array(exercise.sets).fill(false)
-        );
-        const newState = initialState.map((exercise, ei) =>
-          exercise.map((set, si) =>
-            ei === exerciseIndex && si === setIndex ? true : set
-          )
-        );
-        return { ...prev, [currentDay]: newState };
+        const initialState = {};
+        todayPlan.exercises.forEach((exercise, ei) => {
+          for (let si = 0; si < exercise.sets; si++) {
+            initialState[`${ei}-${si}`] = false;
+          }
+        });
+        initialState[key] = true;
+        return { ...prev, [currentDay]: initialState };
       }
       
       // Check if previous sets are completed (sequential checking)
       if (setIndex > 0) {
-        const previousCompleted = dayState[exerciseIndex]?.[setIndex - 1];
-        if (!previousCompleted) {
+        const previousKey = `${exerciseIndex}-${setIndex - 1}`;
+        if (!dayState[previousKey]) {
           // Don't allow clicking this set if previous set not done
           return prev;
         }
       }
       
-      const newDayState = dayState.map((exercise, ei) =>
-        exercise.map((set, si) =>
-          ei === exerciseIndex && si === setIndex ? !set : set
-        )
-      );
-      return { ...prev, [currentDay]: newDayState };
+      return {
+        ...prev,
+        [currentDay]: {
+          ...dayState,
+          [key]: !dayState[key]
+        }
+      };
     });
   };
 
@@ -191,23 +222,38 @@ function App() {
     if (window.confirm('Reset all checkboxes for today?')) {
       const todayPlan = weeklyPlan[currentDay];
       if (!todayPlan.exercises) return;
-      const newState = todayPlan.exercises.map(exercise => 
-        Array(exercise.sets).fill(false)
-      );
-      setCompletedSets(prev => ({ ...prev, [currentDay]: newState }));
+      
+      // Create flat structure
+      const resetState = {};
+      todayPlan.exercises.forEach((exercise, exerciseIndex) => {
+        for (let setIndex = 0; setIndex < exercise.sets; setIndex++) {
+          resetState[`${exerciseIndex}-${setIndex}`] = false;
+        }
+      });
+      
+      setCompletedSets(prev => ({ ...prev, [currentDay]: resetState }));
     }
   };
 
   const getTotalProgress = () => {
-    const dayState = completedSets[currentDay] || [];
+    const todayPlan = weeklyPlan[currentDay];
+    if (!todayPlan.exercises || todayPlan.exercises.length === 0) {
+      return { completed: 0, total: 0, percentage: 0 };
+    }
+
+    const dayState = completedSets[currentDay] || {};
     let completed = 0;
     let total = 0;
-    dayState.forEach(exercise => {
-      exercise.forEach(set => {
+
+    todayPlan.exercises.forEach((exercise, exerciseIndex) => {
+      for (let setIndex = 0; setIndex < exercise.sets; setIndex++) {
         total++;
-        if (set) completed++;
-      });
+        if (dayState[`${exerciseIndex}-${setIndex}`]) {
+          completed++;
+        }
+      }
     });
+
     return { completed, total, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 };
   };
 
@@ -454,7 +500,7 @@ function App() {
                     <label key={setIndex} className="set-checkbox">
                       <input
                         type="checkbox"
-                        checked={completedSets[currentDay]?.[exerciseIndex]?.[setIndex] || false}
+                        checked={completedSets[currentDay]?.[`${exerciseIndex}-${setIndex}`] || false}
                         onChange={() => toggleSet(exerciseIndex, setIndex)}
                       />
                       <span className="checkbox-label">Set {setIndex + 1}</span>
