@@ -19,9 +19,11 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
+      // For production (GitHub Pages), redirect to the deployed URL
+      // For localhost, use the current location
       const redirectTo = window.location.hostname === 'localhost'
-        ? undefined // Use default for localhost
-        : `${window.location.origin}/`;
+        ? `${window.location.origin}/`
+        : 'https://damalcheruvu.github.io/track-my-reps/';
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
