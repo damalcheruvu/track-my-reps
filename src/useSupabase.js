@@ -1,29 +1,28 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
-import { auth, googleProvider } from './firebase';
-import { 
-  signInWithPopup, 
-  signOut as firebaseSignOut,
-  onAuthStateChanged 
-} from 'firebase/auth';
 
-// Keep Firebase for authentication only
+// Use Supabase for authentication
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
     } catch (error) {
       console.error('Error signing in:', error);
       alert('Failed to sign in. Please try again.');
@@ -32,7 +31,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -43,56 +42,42 @@ export const useAuth = () => {
 
 // Supabase sync for data storage
 export const useSupabaseSync = (user, defaultData, tableName) => {
-  const [data, setData] = useState(defaultData);
-  const [loading, setLoading] = useState(true);
+  const loadData = async () => {
+    if (!user) return defaultData;
 
-  // Load data on mount
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) {
-        setData(defaultData);
-        setLoading(false);
-        return;
-      }
+    try {
+      const { data: result, error } = await supabase
+        .from(tableName)
+        .select('data')
+        .eq('user_id', user.id)
+        .single();
 
-      try {
-        const { data: result, error } = await supabase
-          .from(tableName)
-          .select('data')
-          .eq('user_id', user.uid)
-          .single();
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-            // No data exists yet, use default
-            console.log(`No ${tableName} found, using default`);
-            setData(defaultData);
-          } else {
-            console.error(`Error loading ${tableName}:`, error);
-          }
-        } else if (result) {
-          console.log(`✅ Loaded ${tableName} from Supabase:`, result.data);
-          setData(result.data);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log(`No ${tableName} found, using default`);
+          return defaultData;
+        } else {
+          console.error(`Error loading ${tableName}:`, error);
+          return defaultData;
         }
-      } catch (error) {
-        console.error(`Error loading ${tableName}:`, error);
+      } else if (result) {
+        console.log(`✅ Loaded ${tableName} from Supabase:`, result.data);
+        return result.data;
       }
-      
-      setLoading(false);
-    };
+    } catch (error) {
+      console.error(`Error loading ${tableName}:`, error);
+      return defaultData;
+    }
+  };
 
-    loadData();
-  }, [user]);
-
-  // Save function
   const saveData = async (newData) => {
     if (!user) return;
 
     try {
       const { error } = await supabase
         .from(tableName)
-        .upsert({ 
-          user_id: user.uid, 
+        .upsert({
+          user_id: user.id,
           data: newData,
           updated_at: new Date().toISOString()
         }, {
@@ -109,5 +94,5 @@ export const useSupabaseSync = (user, defaultData, tableName) => {
     }
   };
 
-  return [data, setData, saveData, loading];
+  return { loadData, saveData };
 };
