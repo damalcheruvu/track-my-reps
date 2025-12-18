@@ -19,8 +19,15 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     try {
+      const redirectTo = window.location.hostname === 'localhost'
+        ? undefined // Use default for localhost
+        : `${window.location.origin}/`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo
+        }
       });
       if (error) throw error;
     } catch (error) {
