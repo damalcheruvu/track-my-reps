@@ -7,7 +7,7 @@ A mobile-friendly workout tracking app built with React and Vite. Track your dai
 ### Core Features
 - ✅ **Track Sets**: Check off each set as you complete it
 - 📊 **Progress Bar**: Visual progress indicator showing your completion percentage
-- 💾 **Cloud Sync**: Sign in with Google to sync across all devices (via Supabase)
+- 💾 **Cloud Sync**: Sign in with Google to sync across all devices (via Firebase)
 - 📅 **Weekly Planner**: Create custom workout schedules for the entire week
 - 🌴 **Rest Days**: Mark days as rest and track recovery
 - 📱 **Mobile-First**: Optimized for mobile browsers with touch-friendly UI
@@ -31,7 +31,7 @@ A mobile-friendly workout tracking app built with React and Vite. Track your dai
 - **React 19** - UI library with hooks
 - **Vite 7** - Build tool and dev server
 - **Zustand** - Lightweight state management
-- **Supabase** - Authentication and PostgreSQL database
+- **Firebase** - Google Authentication and Firestore database
 - **@dnd-kit** - Drag-and-drop functionality
 - **CSS3** - Modern styling with CSS variables for theming
 
@@ -41,7 +41,7 @@ A mobile-friendly workout tracking app built with React and Vite. Track your dai
 
 - Node.js 18+ installed on your system
 - npm or yarn package manager
-- Supabase account (free) for cloud sync
+- Firebase project (free Spark plan) for cloud sync
 
 ### Installation
 
@@ -56,29 +56,44 @@ A mobile-friendly workout tracking app built with React and Vite. Track your dai
    npm install
    ```
 
-### Supabase Setup (Required for Cloud Sync)
+### Firebase Setup (Required for Cloud Sync)
 
-1. Create a Supabase project at [supabase.com](https://supabase.com/)
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
 
-2. **Enable Google OAuth Provider:**
-   - Go to your Supabase Dashboard → Authentication → Providers
-   - Find "Google" in the list and click to expand
-   - Toggle "Enable Sign in with Google"
-   - You'll need to set up Google OAuth credentials:
-     1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-     2. Create a new project or select an existing one
-     3. Go to APIs & Services → Credentials
-     4. Click "Create Credentials" → "OAuth client ID"
-     5. Select "Web application"
-     6. Add authorized redirect URI: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
-     7. Copy the Client ID and Client Secret to Supabase
+2. **Enable Google Authentication:**
+   - Go to Build → Authentication → Sign-in method
+   - Enable the **Google** provider
+   - Add your deployment domain to authorized domains
 
-3. Create the required tables using the SQL in `supabase-setup.sql`
+3. **Create Firestore Database:**
+   - Go to Build → Firestore Database → Create database
+   - Start in **production mode**
+   - Select a region close to your users
 
-4. Copy your Supabase URL and anon key to `src/supabase.js`:
+4. **Set up security rules** (in Firestore → Rules):
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{userId}/{document=**} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+       }
+     }
+   }
+   ```
+
+5. **Get your Firebase config:**
+   - Go to Project Settings → Your apps → Web app (click `</>` icon)
+   - Register the app and copy the config to `src/firebase.js`:
    ```javascript
-   const supabaseUrl = 'YOUR_SUPABASE_URL';
-   const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+   const firebaseConfig = {
+     apiKey: "YOUR_API_KEY",
+     authDomain: "YOUR_PROJECT.firebaseapp.com",
+     projectId: "YOUR_PROJECT_ID",
+     storageBucket: "YOUR_PROJECT.appspot.com",
+     messagingSenderId: "YOUR_SENDER_ID",
+     appId: "YOUR_APP_ID"
+   };
    ```
 
 ### Development
@@ -113,8 +128,8 @@ src/
 ├── App.jsx              # Main application component
 ├── App.css              # Global styles with CSS variables
 ├── store.js             # Zustand state management
-├── supabase.js          # Supabase client configuration
-├── useSupabase.js       # Custom hooks for auth and data sync
+├── firebase.js          # Firebase client configuration
+├── useFirebase.js       # Custom hooks for auth and Firestore sync
 └── main.jsx             # Application entry point
 ```
 
@@ -205,18 +220,17 @@ The app uses a dark theme by default with industry-standard colors. Update the C
 
 ### Data Storage
 
-- **With Google Sign-In**: Data is synced to Supabase (PostgreSQL database)
+- **With Google Sign-In**: Data is synced to Firebase Firestore
   - ✅ Syncs across all devices
+  - ✅ Free tier never pauses (unlike some alternatives)
   - ✅ Automatic backup
-  - ✅ Never lose your data
   
 - **Without Sign-In**: App requires sign-in for data persistence
 
 ### What's Stored
 
-- **Weekly Workout Plan**: Your custom exercises for each day
-- **Daily Progress**: Checkbox states for all sets
-- **User Preferences**: Theme preference (stored locally)
+- **Weekly Workout Plan**: Your custom exercises for each day (`users/{uid}/weekly_plans`)
+- **Daily Progress**: Checkbox states for all sets (`users/{uid}/completed_sets`)
 
 ## Browser Support
 
