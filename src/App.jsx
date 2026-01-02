@@ -1,4 +1,4 @@
-import { useEffect, useCallback, memo } from 'react'
+import { useEffect, memo } from 'react'
 import './App.css'
 import { useAuth, useFirebaseSync } from './useFirebase'
 import { useStore, DAYS, DEFAULT_WEEKLY_PLAN, ensureExerciseIds } from './store'
@@ -11,7 +11,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
 } from '@dnd-kit/core'
 import {
   SortableContext,
