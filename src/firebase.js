@@ -1,16 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
-// Your Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyDA7JElzU6qiRo7JInsyFOyCwV584gZ5Ag",
-    authDomain: "track-my-reps.firebaseapp.com",
-    projectId: "track-my-reps",
-    storageBucket: "track-my-reps.firebasestorage.app",
-    messagingSenderId: "164703762100",
-    appId: "1:164703762100:web:1d75ecf0d08a101135c9e1",
-    measurementId: "G-1RHC65C2N3"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -19,3 +19,15 @@ const app = initializeApp(firebaseConfig);
 // Initialize services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enable offline persistence for Firestore
+// This allows the app to work offline and sync when back online
+enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+        // Multiple tabs open, persistence can only be enabled in one tab at a time
+        console.warn('Firestore persistence failed: Multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+        // Browser doesn't support persistence
+        console.warn('Firestore persistence not supported in this browser');
+    }
+});

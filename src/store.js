@@ -24,7 +24,8 @@ export const ensureExerciseIds = (weeklyPlan) => {
 };
 
 export const DEFAULT_WEEKLY_PLAN = {
-  Monday: {
+  Monday: { isRest: true, exercises: [] },
+  Tuesday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'Back Squat', sets: 4, reps: '', weight: null },
@@ -35,13 +36,13 @@ export const DEFAULT_WEEKLY_PLAN = {
       { id: generateId(), name: 'Behind-Back Wrist Curl', sets: 2, reps: '', weight: null },
     ]
   },
-  Tuesday: {
+  Wednesday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'HIIT: 20s/40s ×10', sets: 1, reps: '10 rounds', weight: null },
     ]
   },
-  Wednesday: {
+  Thursday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'Deadlift', sets: 4, reps: '', weight: null },
@@ -52,13 +53,13 @@ export const DEFAULT_WEEKLY_PLAN = {
       { id: generateId(), name: 'Barbell Hold', sets: 2, reps: '', weight: null },
     ]
   },
-  Thursday: {
+  Friday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'Steady Cardio', sets: 1, reps: '20-30 min', weight: null },
     ]
   },
-  Friday: {
+  Saturday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'Front Squat', sets: 4, reps: '', weight: null },
@@ -69,7 +70,7 @@ export const DEFAULT_WEEKLY_PLAN = {
       { id: generateId(), name: 'Wrist Curl Down', sets: 2, reps: '', weight: null },
     ]
   },
-  Saturday: {
+  Sunday: {
     isRest: false,
     exercises: [
       { id: generateId(), name: 'Light Back Squat', sets: 4, reps: '', weight: null },
@@ -79,7 +80,6 @@ export const DEFAULT_WEEKLY_PLAN = {
       { id: generateId(), name: 'Curl+RevCurl', sets: 3, reps: '', weight: null },
     ]
   },
-  Sunday: { isRest: true, exercises: [] },
 };
 
 // Exercise library for searchable dropdown
@@ -124,34 +124,34 @@ export const useStore = create((set, get) => ({
   // View state
   view: 'tracker',
   setView: (view) => set({ view }),
-  
+
   // Current day
   currentDay: (() => {
     const today = new Date().getDay();
     return DAYS[today === 0 ? 6 : today - 1];
   })(),
   setCurrentDay: (day) => set({ currentDay: day }),
-  
+
   // Weekly plan
   weeklyPlan: DEFAULT_WEEKLY_PLAN,
   setWeeklyPlan: (plan) => set({ weeklyPlan: plan }),
-  
+
   // Completed sets
   completedSets: {},
   setCompletedSets: (sets) => set({ completedSets: sets }),
-  
+
   // Modal state for add exercise
   isAddExerciseModalOpen: false,
   addExerciseModalDay: null,
   openAddExerciseModal: (day) => set({ isAddExerciseModalOpen: true, addExerciseModalDay: day }),
   closeAddExerciseModal: () => set({ isAddExerciseModalOpen: false, addExerciseModalDay: null }),
-  
+
   // Toggle set completion
   toggleSet: (exerciseIndex, setIndex) => {
     const { currentDay, completedSets, weeklyPlan } = get();
     let dayState = completedSets[currentDay] || {};
     const key = `${exerciseIndex}-${setIndex}`;
-    
+
     // Initialize if empty
     if (Object.keys(dayState).length === 0) {
       const todayPlan = weeklyPlan[currentDay];
@@ -163,38 +163,38 @@ export const useStore = create((set, get) => ({
         }
       });
     }
-    
+
     if (setIndex > 0) {
       const previousKey = `${exerciseIndex}-${setIndex - 1}`;
       if (!dayState[previousKey]) return;
     }
-    
+
     const newDayState = {
       ...dayState,
       [key]: !dayState[key]
     };
-    
+
     set({ completedSets: { ...completedSets, [currentDay]: newDayState } });
   },
-  
+
   // Reset all sets for today
   resetAll: () => {
     const { currentDay, weeklyPlan } = get();
     if (window.confirm('Reset all checkboxes for today?')) {
       const todayPlan = weeklyPlan[currentDay];
       if (!todayPlan.exercises) return;
-      
+
       const resetState = {};
       todayPlan.exercises.forEach((exercise, exerciseIndex) => {
         for (let setIndex = 0; setIndex < exercise.sets; setIndex++) {
           resetState[`${exerciseIndex}-${setIndex}`] = false;
         }
       });
-      
+
       set({ completedSets: { ...get().completedSets, [currentDay]: resetState } });
     }
   },
-  
+
   // Get progress for current day
   getTotalProgress: () => {
     const { currentDay, weeklyPlan, completedSets } = get();
@@ -218,7 +218,7 @@ export const useStore = create((set, get) => ({
 
     return { completed, total, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 };
   },
-  
+
   // Toggle rest day
   toggleRestDay: (day) => {
     const { weeklyPlan } = get();
@@ -233,7 +233,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Add exercise with validation
   addExercise: (day, newExercise) => {
     // Validate exercise data
@@ -243,7 +243,7 @@ export const useStore = create((set, get) => ({
     if (!newExercise.sets || newExercise.sets < 1 || newExercise.sets > 20) {
       return { success: false, error: 'Sets must be between 1 and 20' };
     }
-    
+
     const { weeklyPlan } = get();
     set({
       weeklyPlan: {
@@ -263,7 +263,7 @@ export const useStore = create((set, get) => ({
     });
     return { success: true };
   },
-  
+
   // Remove exercise with confirmation
   removeExercise: (day, exerciseIndex, exerciseName) => {
     if (!window.confirm(`Remove "${exerciseName || 'this exercise'}" from ${day}?`)) {
@@ -280,7 +280,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Update exercise name
   updateExerciseName: (day, exerciseIndex, newName) => {
     const { weeklyPlan } = get();
@@ -296,7 +296,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Update exercise sets
   updateExerciseSets: (day, exerciseIndex, newSets) => {
     const { weeklyPlan } = get();
@@ -313,7 +313,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Update exercise reps
   updateExerciseReps: (day, exerciseIndex, newReps) => {
     const { weeklyPlan } = get();
@@ -329,7 +329,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Update exercise weight
   updateExerciseWeight: (day, exerciseIndex, newWeight) => {
     const { weeklyPlan } = get();
@@ -345,7 +345,7 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Update exercise notes
   updateExerciseNotes: (day, exerciseIndex, newNotes) => {
     const { weeklyPlan } = get();
@@ -361,21 +361,21 @@ export const useStore = create((set, get) => ({
       }
     });
   },
-  
+
   // Handle drag end for reordering (uses exercise IDs)
   handleDragEnd: (day, event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    
+
     const { weeklyPlan } = get();
     const exercises = weeklyPlan[day].exercises || [];
     const oldIndex = exercises.findIndex(ex => ex.id === active.id);
     const newIndex = exercises.findIndex(ex => ex.id === over.id);
-    
+
     if (oldIndex === -1 || newIndex === -1) return;
-    
+
     const newExercises = arrayMove(exercises, oldIndex, newIndex);
-    
+
     set({
       weeklyPlan: {
         ...weeklyPlan,
